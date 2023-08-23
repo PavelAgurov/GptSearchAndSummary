@@ -1,0 +1,9 @@
+langchain
+openai
+streamlit
+tiktoken
+sentence-transformers
+qdrant-client 
+unstructured[all-docs]
+
+
