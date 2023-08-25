@@ -16,7 +16,7 @@ st.set_page_config(page_title= PAGE_NAME, layout="wide")
 st.title(PAGE_NAME)
 streamlit_hack_remove_top_space()
 
-current_file_list = st.empty()
+current_file_list = st.expander(label="Currently available files").empty()
 
 new_uploaded_files = st.file_uploader(
     UPLOAD_FILE_MESSAGE,
@@ -31,7 +31,7 @@ progress = st.empty()
 
 source_index = BackEndCore.get_source_index()
 currently_uploaded_files = source_index.get_all_files(True)
-currently_uploaded_files_str = 'Availble files:<br/>' + "".join([f'<li>{file_name}<br/>' for file_name in currently_uploaded_files])
+currently_uploaded_files_str = "".join([f'{file_name}<br/>' for file_name in currently_uploaded_files])
 current_file_list.markdown(currently_uploaded_files_str, unsafe_allow_html=True)
 
 if not load_button:

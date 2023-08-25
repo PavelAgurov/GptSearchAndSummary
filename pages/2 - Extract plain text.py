@@ -16,7 +16,7 @@ st.set_page_config(page_title= PAGE_NAME, layout="wide")
 st.title(PAGE_NAME)
 streamlit_hack_remove_top_space()
 
-file_list = st.expander(label="Availble files").empty()
+file_list = st.expander(label="Available files").empty()
 
 run_button = st.button(label="Run extraction")
 progress = st.empty()

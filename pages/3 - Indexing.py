@@ -16,7 +16,7 @@ st.set_page_config(page_title= PAGE_NAME, layout="wide")
 st.title(PAGE_NAME)
 streamlit_hack_remove_top_space()
 
-file_list = st.expander(label="Availble files").empty()
+file_list = st.expander(label="Available files").empty()
 
 col1 , col2 = st.columns(2)
 chunk_size = col1.number_input(label="Chunk size", min_value=100, max_value=10000, value= 1000)
