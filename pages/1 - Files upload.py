@@ -16,7 +16,8 @@ st.set_page_config(page_title= PAGE_NAME, layout="wide")
 st.title(PAGE_NAME)
 streamlit_hack_remove_top_space()
 
-current_file_list = st.expander(label="Currently available files").empty()
+current_file_list = st.expander(label="Currently available files")
+st.info('Uploading or deleting files does not start indexing automatically')
 
 new_uploaded_files = st.file_uploader(
     UPLOAD_FILE_MESSAGE,
@@ -27,12 +28,17 @@ new_uploaded_files = st.file_uploader(
 load_button = st.button(label="Upload")
 progress = st.empty()
 
-# ------------------------------- App
-
 source_index = BackEndCore.get_source_index()
 currently_uploaded_files = source_index.get_all_files(True)
-currently_uploaded_files_str = "".join([f'{file_name}<br/>' for file_name in currently_uploaded_files])
-current_file_list.markdown(currently_uploaded_files_str, unsafe_allow_html=True)
+for index, file_name in enumerate(currently_uploaded_files):
+    emp = current_file_list.empty()
+    col1, col2 = emp.columns([9, 1])
+    col1.markdown(file_name)
+    if col2.button("Del", key=f"button_delete_{index}"):
+        source_index.delete_file(file_name)
+        st.experimental_rerun()
+
+# ------------------------------- App
 
 if not load_button:
     st.stop()
@@ -44,4 +50,4 @@ if not new_uploaded_files:
 progress.markdown('Saving files...')
 for file in new_uploaded_files:
     source_index.save_file(file.name, file.getbuffer())
-progress.markdown(f'Saved {len(new_uploaded_files)} files.')
+st.experimental_rerun()

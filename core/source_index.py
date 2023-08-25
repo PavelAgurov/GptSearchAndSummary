@@ -26,3 +26,6 @@ class SourceIndex:
             return [os.path.basename(file_name) for file_name in file_list]
         return [os.path.join(self.__DISK_FOLDER, file_name) for file_name in file_list]
         
+    def delete_file(self, file_name : str):
+        """Remove file from source folder"""
+        os.remove(os.path.join(self.__DISK_FOLDER, file_name))
