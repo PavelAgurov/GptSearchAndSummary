@@ -16,7 +16,7 @@ st.set_page_config(page_title= PAGE_NAME, layout="wide")
 st.title(PAGE_NAME)
 streamlit_hack_remove_top_space()
 
-file_list = st.empty()
+file_list = st.expander(label="Availble files").empty()
 
 run_button = st.button(label="Run extraction")
 progress = st.empty()
@@ -30,7 +30,7 @@ if not uploaded_files:
     progress.markdown('Please load at least one file')
     st.stop()
 
-uploaded_files_str = 'Availble files:<br/>' + "".join([f'<li>{file_name}<br/>' for file_name in uploaded_files])
+uploaded_files_str = "".join([f'<li>{file_name}<br/>' for file_name in uploaded_files])
 file_list.markdown(uploaded_files_str, unsafe_allow_html=True)
 
 if not run_button:

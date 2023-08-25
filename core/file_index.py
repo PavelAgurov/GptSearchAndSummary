@@ -1,7 +1,7 @@
 """
     File index
 """
-# pylint: disable=C0301,C0103,C0304,C0303,W0611
+# pylint: disable=C0301,C0103,C0304,C0303,W0611,W0511
 
 import os
 from dataclasses import dataclass
@@ -12,6 +12,8 @@ from langchain.text_splitter import TextSplitter
 from langchain.embeddings.base import Embeddings
 from langchain.vectorstores import Qdrant
 from langchain.docstore.document import Document
+
+#TODO: index metadata (page number)
 
 @dataclass
 class SearchResult:

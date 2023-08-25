@@ -6,7 +6,7 @@
 from core.file_index import FileIndex
 from core.source_index import SourceIndex
 from core.llm_manager import LlmManager
-from core.text_extractor import TextExtractor
+from core.text_extractor import TextExtractor, TextExtractorParams
 
 import streamlit as st
 
@@ -57,7 +57,8 @@ class BackEndCore():
     def run_text_extraction(self) -> list[str]:
         """Extract plain text from source files"""
         uploaded_files = self.get_source_index().get_all_files()
-        return self.get_text_extractor().text_extraction(uploaded_files, True)
+        textExtractorParams = TextExtractorParams(True)
+        return self.get_text_extractor().text_extraction(uploaded_files, textExtractorParams)
 
     def run_file_indexing(self, chunk_size : int, chunk_overlap : int) -> list[str]:
         """Run file indexing"""

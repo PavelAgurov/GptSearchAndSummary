@@ -16,7 +16,8 @@ st.set_page_config(page_title= PAGE_NAME, layout="wide")
 st.title(PAGE_NAME)
 streamlit_hack_remove_top_space()
 
-file_list = st.empty()
+file_list = st.expander(label="Availble files").empty()
+
 col1 , col2 = st.columns(2)
 chunk_size = col1.number_input(label="Chunk size", min_value=100, max_value=10000, value= 1000)
 chunk_overlap = col2.number_input(label="Сhunk overlap", min_value=0, max_value=1000, value= 0)
@@ -34,7 +35,7 @@ if not text_files:
     progress.markdown('Please extract text from at least one file')
     st.stop()
 
-text_files_str = 'Availble files:<br/>' + "".join([f'<li>{file_name}<br/>' for file_name in text_files])
+text_files_str = "".join([f'<li>{file_name}<br/>' for file_name in text_files])
 file_list.markdown(text_files_str, unsafe_allow_html=True)
 
 if not run_button:
