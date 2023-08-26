@@ -50,9 +50,10 @@ class TextExtractor:
 
         for file in file_list:
             base_file_name = os.path.basename(file)
+            base_file_name_lower = base_file_name.lower()
             document_content_list = list[DocumentContentItem]()
 
-            if file.lower().endswith('.pdf'):
+            if base_file_name_lower.endswith('.pdf'):
                 pdf = pypdf.PdfReader(file)
                 for page in pdf.pages:
                     text = page.extract_text()
@@ -64,7 +65,7 @@ class TextExtractor:
                                 )
                     )
                 result.append(f'Converted {len(pdf.pages)} pages(s) from {base_file_name}')
-            elif file.lower().endswith('.docx'):
+            elif base_file_name_lower.endswith('.docx'):
                 # docx format has no information about page number
                 # we can only save paragraphs index
                 doc = docx.Document(file)
@@ -79,6 +80,18 @@ class TextExtractor:
                             )
                 )
                 result.append(f'Converted document from {base_file_name}')
+            elif base_file_name_lower.endswith('.txt'):
+                # txt is plain text, it's not needed to convert it
+                with open(file, encoding="utf-8") as f:
+                    page_content = f.read()
+                document_content_list.append(DocumentContentItem(
+                                    base_file_name,
+                                    page_content,
+                                    1,
+                                    {}
+                                )
+                )
+                result.append(f'Copied plain text document from {base_file_name}')
             else:
                 loader = UnstructuredFileLoader(file, mode= "single")
                 document_content_list.extend([DocumentContentItem(
