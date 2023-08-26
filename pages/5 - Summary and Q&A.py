@@ -6,7 +6,7 @@
 import streamlit as st
 from utils_streamlit import streamlit_hack_remove_top_space
 
-PAGE_NAME = "Summary"
+PAGE_NAME = "Summary and Q&A"
 
 # ------------------------------- UI Setup
 st.set_page_config(page_title= PAGE_NAME, layout="wide")

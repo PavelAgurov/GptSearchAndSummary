@@ -14,6 +14,7 @@ from dataclasses import dataclass
 
 from langchain.document_loaders import UnstructuredFileLoader
 import pypdf
+import docx
 
 @dataclass
 class TextExtractorParams:
@@ -25,6 +26,7 @@ class DocumentContentItem:
     """Content item of the document"""
     file_name    : str
     page_content : str
+    page_number  : int
     metadata     : dict
 
 class TextExtractor:
@@ -47,32 +49,50 @@ class TextExtractor:
                 os.remove(os.path.join(self.__DISK_FOLDER, f))
 
         for file in file_list:
+            base_file_name = os.path.basename(file)
             document_content_list = list[DocumentContentItem]()
+
             if file.lower().endswith('.pdf'):
                 pdf = pypdf.PdfReader(file)
                 for page in pdf.pages:
                     text = page.extract_text()
                     document_content_list.append(DocumentContentItem(
-                                    os.path.basename(file),
-                                    text, 
+                                    base_file_name,
+                                    text,
+                                    page.page_number,
                                     {"page_number": page.page_number}
                                 )
                     )
-                result.append(f'Converted {len(pdf.pages)} pages(s) from {os.path.basename(file)}')
+                result.append(f'Converted {len(pdf.pages)} pages(s) from {base_file_name}')
+            elif file.lower().endswith('.docx'):
+                # docx format has no information about page number
+                # we can only save paragraphs index
+                doc = docx.Document(file)
+                full_doc_text = []
+                for paragraph in doc.paragraphs:
+                    full_doc_text.append(paragraph.text)
+                document_content_list.append(DocumentContentItem(
+                                base_file_name,
+                                '\n'.join(full_doc_text),
+                                1,
+                                {"page_number": 1}
+                            )
+                )
+                result.append(f'Converted document from {base_file_name}')
             else:
                 loader = UnstructuredFileLoader(file, mode= "single")
                 document_content_list.extend([DocumentContentItem(
-                                    os.path.basename(file),
+                                    base_file_name,
                                     d.page_content,
+                                    1,
                                     d.metadata
                                 ) for d in loader.load()]
                 )
-                result.append(f'Converted {len(document_content_list)} document(s) from {os.path.basename(file)}')
-
+                result.append(f'Converted {len(document_content_list)} document(s) from {base_file_name}')
             
-            base_file_name = os.path.basename(file)
-            for index, content_item in enumerate(document_content_list):
-                with open(os.path.join(self.__DISK_FOLDER, f'{base_file_name}-{index}.txt'), "wt", encoding="utf-8") as f:
+            for content_item in document_content_list:
+                page_file_name = f'{base_file_name}-{content_item.page_number}.txt'
+                with open(os.path.join(self.__DISK_FOLDER, page_file_name), "wt", encoding="utf-8") as f:
                     f.write(content_item.page_content)
 
         return result
