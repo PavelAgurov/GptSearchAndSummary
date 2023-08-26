@@ -1,7 +1,7 @@
 """
     File index
 """
-# pylint: disable=C0301,C0103,C0304,C0303,W0611,W0511
+# pylint: disable=C0301,C0103,C0304,C0303,W0611,W0511,R0913
 
 import os
 from dataclasses import dataclass
@@ -34,12 +34,12 @@ class FileIndex:
             if not os.path.isdir(self.__DISK_FOLDER):
                 os.mkdir(self.__DISK_FOLDER)
 
-    def _create_client(self) -> QdrantClient:
+    def _create_client(self, index_name : str) -> QdrantClient:
         if self.in_memory:
             return QdrantClient(location=":memory:")
-        return QdrantClient(path= self.__DISK_FOLDER)
+        return QdrantClient(path = os.path.join(self.__DISK_FOLDER, index_name))
 
-    def run_indexing(self, file_list : list[str], text_splitter : TextSplitter, embeddings : Embeddings) -> list[str]:
+    def run_indexing(self, index_name : str, file_list : list[str], text_splitter : TextSplitter, embeddings : Embeddings) -> list[str]:
         """Index files from file_list based on text_splitter and embeddings and save into DB"""
         
         result = list[str]()
@@ -67,7 +67,7 @@ class FileIndex:
             Qdrant.from_documents(
                 chunks,
                 embeddings,
-                path= self.__DISK_FOLDER,
+                path= os.path.join(self.__DISK_FOLDER, index_name),
                 collection_name= self.__CHUNKS_COLLECTION_NAME,
                 force_recreate=True
             )      
@@ -75,14 +75,19 @@ class FileIndex:
 
         return result
     
-    def similarity_search(self, query: str, embeddings : Embeddings, sample_count : int, score_threshold : float = None):
+    def similarity_search(self, index_name : str, query: str, embeddings : Embeddings, sample_count : int, score_threshold : float = None):
         """Run similarity search"""
 
         qdrant = Qdrant(
-                    client= self._create_client(),
+                    client= self._create_client(index_name),
                     collection_name= self.__CHUNKS_COLLECTION_NAME,
                     embeddings= embeddings
                 )
         
         search_results : list[tuple[Document, float]] = qdrant.similarity_search_with_score(query, k= sample_count, score_threshold = score_threshold)
         return [SearchResult(s[0].page_content, s[1]) for s in search_results]
+
+    def get_index_name_list(self) -> list[str]:
+        """Get list of available indexes"""
+        dir_list = os.listdir(self.__DISK_FOLDER)
+        return dir_list

@@ -3,8 +3,8 @@
 """
 # pylint: disable=C0301,C0103,C0304,C0303,W0611,C0411
 
-from core.file_index import FileIndex
-from core.source_index import SourceIndex
+from core.file_indexing import FileIndex
+from core.source_storage import SourceStorage
 from core.llm_manager import LlmManager
 from core.text_extractor import TextExtractor, TextExtractorParams
 
@@ -34,10 +34,10 @@ class BackEndCore():
         return st.session_state[cls._SESSION_FILE_INDEX]
 
     @classmethod
-    def get_source_index(cls) -> SourceIndex:
+    def get_source_index(cls) -> SourceStorage:
         """Get SourceIndex"""
         if cls._SESSION_SOURCE_INDEX not in st.session_state:
-            st.session_state[cls._SESSION_SOURCE_INDEX] = SourceIndex()
+            st.session_state[cls._SESSION_SOURCE_INDEX] = SourceStorage()
         return st.session_state[cls._SESSION_SOURCE_INDEX]
 
     @classmethod
@@ -60,7 +60,7 @@ class BackEndCore():
         textExtractorParams = TextExtractorParams(True)
         return self.get_text_extractor().text_extraction(uploaded_files, textExtractorParams)
 
-    def run_file_indexing(self, chunk_size : int, chunk_overlap : int) -> list[str]:
+    def run_file_indexing(self, index_name : str, chunk_size : int, chunk_overlap : int) -> list[str]:
         """Run file indexing"""
 
         llm_manager = self.get_llm()
@@ -76,6 +76,7 @@ class BackEndCore():
         text_files = text_extractor.get_all_files()
 
         indexing_result = file_index.run_indexing(
+                index_name,
                 text_files,
                 text_splitter,
                 llm_manager.get_embeddings()

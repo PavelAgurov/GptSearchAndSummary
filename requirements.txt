@@ -7,6 +7,6 @@ qdrant-client
 unstructured[all-docs]
 pypdf
 extract_msg
-
+sentence-transformers
 
 

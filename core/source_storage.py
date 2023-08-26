@@ -1,12 +1,12 @@
 """
-    Source index
+    Source file storage
 """
 
 import os
 from typing import Any
 
-class SourceIndex:
-    """Source index class"""
+class SourceStorage:
+    """Source storage class"""
 
     __DISK_FOLDER = '.data'
 
