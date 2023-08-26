@@ -21,7 +21,7 @@ st.info('Uploading or deleting files does not start indexing automatically')
 
 new_uploaded_files = st.file_uploader(
     UPLOAD_FILE_MESSAGE,
-    type=["pdf", "docx", "txt"],
+    type=["pdf", "docx", "txt", "msg"],
     accept_multiple_files= True
 )
 

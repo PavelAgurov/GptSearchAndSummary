@@ -10,11 +10,13 @@ from dataclasses import dataclass
 #TODO: to suppot PPT by UnstructuredFileLoader we need to install libreoffice
 #TODO: to check if UnstructuredFileLoader use external API and send information to their API
 #TODO: save additional meta-information
-#TODO: process e-mails
 
 from langchain.document_loaders import UnstructuredFileLoader
 import pypdf
+# https://github.com/python-openxml/python-docx
 import docx
+# https://github.com/TeamMsgExtractor/msg-extractor/tree/master
+import extract_msg 
 
 @dataclass
 class TextExtractorParams:
@@ -65,6 +67,16 @@ class TextExtractor:
                                 )
                     )
                 result.append(f'Converted {len(pdf.pages)} pages(s) from {base_file_name}')
+            elif base_file_name_lower.endswith('.msg'):
+                msg = extract_msg.openMsg(file)
+                document_content_list.append(DocumentContentItem(
+                                base_file_name,
+                                msg.body,
+                                1,
+                                {"to": msg.to, "cc": msg.cc, "from" : msg.sender}
+                            )
+                )
+                result.append(f'Converted e-mail from {base_file_name}')
             elif base_file_name_lower.endswith('.docx'):
                 # docx format has no information about page number
                 # we can only save paragraphs index
