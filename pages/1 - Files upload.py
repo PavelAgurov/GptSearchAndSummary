@@ -11,6 +11,10 @@ from backend_core import BackEndCore
 
 PAGE_NAME = "Files Upload"
 
+SESSION_UPLOADED_STATUS = 'files_uploaded_status'
+if SESSION_UPLOADED_STATUS not in st.session_state:
+    st.session_state[SESSION_UPLOADED_STATUS] = None
+
 # ------------------------------- UI Setup
 st.set_page_config(page_title= PAGE_NAME, layout="wide")
 st.title(PAGE_NAME)
@@ -22,7 +26,8 @@ st.info('Uploading or deleting files does not start indexing automatically')
 new_uploaded_files = st.file_uploader(
     UPLOAD_FILE_MESSAGE,
     type=["pdf", "docx", "txt", "msg"],
-    accept_multiple_files= True
+    accept_multiple_files= True,
+    key="new_uploaded_files"
 )
 
 load_button = st.button(label="Upload")
@@ -39,6 +44,10 @@ for index, file_name in enumerate(currently_uploaded_files):
         st.experimental_rerun()
 
 # ------------------------------- App
+status = st.session_state[SESSION_UPLOADED_STATUS]
+if status:
+    st.info(f'Uploaded {status}')
+st.session_state[SESSION_UPLOADED_STATUS] = None
 
 if not load_button:
     st.stop()
@@ -50,4 +59,5 @@ if not new_uploaded_files:
 progress.markdown('Saving files...')
 for file in new_uploaded_files:
     source_index.save_file(file.name, file.getbuffer())
+st.session_state[SESSION_UPLOADED_STATUS] = f'Uploaded {len(new_uploaded_files)} file(s)'
 st.experimental_rerun()
