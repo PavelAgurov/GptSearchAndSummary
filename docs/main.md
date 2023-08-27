@@ -61,15 +61,14 @@ streamlit run main.py
 - [x] create Qdrant vector db in memory or in file
 - [x] index name - it's possible to create many indexes
 - [x] support OpenAI or SBERT embeddings
+- [x] min chunk size to ignore "empty" chunks/paragpaphs
 - [ ] to save meta-information into db
 - [ ] split by Document set
-- [ ] min chunk size to ignore "empty" chunks/paragpaphs
 
 ### 4. Backlog: Topics
 
 - [ ] similairy request per topic
 - [ ] summary prompt per topic
-
 
 ### 5. Backlog: Citations (similatiry search)
 
