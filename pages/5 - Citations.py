@@ -9,10 +9,21 @@ from backend_core import BackEndCore
 
 PAGE_NAME = "Citations"
 
+file_index = BackEndCore.get_file_index()
+llm_manager = BackEndCore.get_llm()
+
 # ------------------------------- UI Setup
 st.set_page_config(page_title= PAGE_NAME, layout="wide")
 st.title(PAGE_NAME)
 streamlit_hack_remove_top_space()
+
+index_name = st.selectbox(
+    "Select index:", 
+    key="index_name", 
+    options= file_index.get_index_name_list(), 
+    index= 0, 
+    label_visibility="visible"
+)
 
 sample_count = st.number_input(label="Count of samples", min_value=1, max_value=100, value=10)
 threshold = st.number_input(label="Threshold", min_value=0.00, max_value=1.00, value=0.50, step=0.01, format="%.2f")
@@ -26,14 +37,12 @@ search_result_container = st.container()
 if not query or not run_button:
     st.stop()
 
-fileIndex = BackEndCore.get_file_index()
-llm_manager = BackEndCore.get_llm()
-
 score_threshold = threshold
 if score_threshold == 0:
     score_threshold = None
 
-search_result_list = fileIndex.similarity_search(
+search_result_list = file_index.similarity_search(
+    index_name,
     query, 
     llm_manager.get_embeddings(), 
     sample_count, 

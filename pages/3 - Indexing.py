@@ -22,7 +22,11 @@ st.set_page_config(page_title= PAGE_NAME, layout="wide")
 st.title(PAGE_NAME)
 streamlit_hack_remove_top_space()
 
-file_list = st.expander(label="Available files").empty()
+text_files = text_extractor.get_all_files(True)
+
+file_list = st.expander(label=f'Available {len(text_files)} file(s)').empty()
+text_files_str = "".join([f'<li>{file_name}<br/>' for file_name in text_files])
+file_list.markdown(text_files_str, unsafe_allow_html=True)
 
 embedding = st.selectbox(
     "Select embedding:",
@@ -31,9 +35,10 @@ embedding = st.selectbox(
     index=0
 )
 
-col1 , col2 = st.columns(2)
-chunk_size = col1.number_input(label="Chunk size", min_value=100, max_value=10000, value= 1000)
-chunk_overlap = col2.number_input(label="Сhunk overlap", min_value=0, max_value=1000, value= 0)
+col1 , col2, col3 = st.columns(3)
+chunk_min_chars      = col1.number_input(label="Chunk min (chars)", min_value=1, max_value=10000, value= 50)
+chunk_size_tokens    = col2.number_input(label="Chunk size (tokens)", min_value=100, max_value=10000, value= 1000)
+chunk_overlap_tokens = col3.number_input(label="Сhunk overlap (tokens)", min_value=0, max_value=1000, value= 0)
 
 st.info("Database will be created from scratch!")
 
@@ -59,15 +64,9 @@ else:
 run_button = st.button(label="Run indexing")
 progress = st.empty()
 
-# ------------------------------- App
-
-text_files = text_extractor.get_all_files(True)
 if not text_files:
     progress.markdown('There are no files for indexing.')
     st.stop()
-
-text_files_str = "".join([f'<li>{file_name}<br/>' for file_name in text_files])
-file_list.markdown(text_files_str, unsafe_allow_html=True)
 
 if not run_button:
     st.stop()
@@ -85,6 +84,6 @@ if create_mode == CREATE_MODE_EXISTED:
     index_name = existed_index_name
 
 progress.markdown(f'Start indexing [{index_name}] ...')
-indexing_result = BackEndCore().run_file_indexing(index_name, chunk_size, chunk_overlap)
+indexing_result = BackEndCore().run_file_indexing(index_name, chunk_min_chars, chunk_size_tokens, chunk_overlap_tokens)
 indexing_result_str = '<br/>'.join(indexing_result)
 progress.markdown(f'Result:<br/>{indexing_result_str}', unsafe_allow_html= True)

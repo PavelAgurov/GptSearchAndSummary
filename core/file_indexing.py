@@ -8,10 +8,17 @@ from dataclasses import dataclass
 
 from qdrant_client import QdrantClient
 
-from langchain.text_splitter import TextSplitter
 from langchain.embeddings.base import Embeddings
 from langchain.vectorstores import Qdrant
 from langchain.docstore.document import Document
+
+from core.parsers.chunk_splitters.base_splitter import ChunkSplitterParams
+from core.parsers.chunk_splitters.token_splitter import TokenChunkSplitter
+
+@dataclass
+class FileIndexParams:
+    """Parameters for indexing"""
+    splitter_params : ChunkSplitterParams
 
 @dataclass
 class SearchResult:
@@ -37,20 +44,20 @@ class FileIndex:
             return QdrantClient(location=":memory:")
         return QdrantClient(path = os.path.join(self.__DISK_FOLDER, index_name))
 
-    def run_indexing(self, index_name : str, file_list : list[str], text_splitter : TextSplitter, embeddings : Embeddings) -> list[str]:
+    def run_indexing(self, index_name : str, file_list : list[str], embeddings : Embeddings, index_params : FileIndexParams) -> list[str]:
         """Index files from file_list based on text_splitter and embeddings and save into DB"""
         
-        result = list[str]()
+        log = list[str]()
 
-        plain_text_list = []
+        plain_text_list = list[str]()
         for file in file_list:
             with open(file, encoding="utf-8") as f:
                 plain_text_list.append(f.read())
+        log.append(f'Loaded {len(plain_text_list)} document(s)')
 
-        result.append(f'Loaded {len(plain_text_list)} document(s)')
-
-        chunks = text_splitter.split_documents(text_splitter.create_documents(plain_text_list))
-        result.append(f'Total count of chunks {len(chunks)}')
+        token_chunk_splitter = TokenChunkSplitter(index_params.splitter_params)
+        chunks  = token_chunk_splitter.split_documents(token_chunk_splitter.create_documents(plain_text_list))
+        log.append(f'Total count of chunks {len(chunks)}')
 
         if self.in_memory:
             Qdrant.from_documents(
@@ -60,7 +67,7 @@ class FileIndex:
                 collection_name= self.__CHUNKS_COLLECTION_NAME,
                 force_recreate=True
             )
-            result.append('Index has been stored in memory')
+            log.append('Index has been stored in memory')
         else:
             Qdrant.from_documents(
                 chunks,
@@ -69,11 +76,11 @@ class FileIndex:
                 collection_name= self.__CHUNKS_COLLECTION_NAME,
                 force_recreate=True
             )      
-            result.append('Index has been stored on disk')
+            log.append('Index has been stored on disk')
 
-        return result
+        return log
     
-    def similarity_search(self, index_name : str, query: str, embeddings : Embeddings, sample_count : int, score_threshold : float = None):
+    def similarity_search(self, index_name : str, query: str, embeddings : Embeddings, sample_count : int, score_threshold : float):
         """Run similarity search"""
 
         qdrant = Qdrant(
@@ -81,6 +88,9 @@ class FileIndex:
                     collection_name= self.__CHUNKS_COLLECTION_NAME,
                     embeddings= embeddings
                 )
+        
+        if score_threshold == 0:
+            score_threshold = None
         
         search_results : list[tuple[Document, float]] = qdrant.similarity_search_with_score(query, k= sample_count, score_threshold = score_threshold)
         return [SearchResult(s[0].page_content, s[1]) for s in search_results]

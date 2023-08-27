@@ -3,14 +3,13 @@
 """
 # pylint: disable=C0301,C0103,C0304,C0303,W0611,C0411
 
-from core.file_indexing import FileIndex
+from core.file_indexing import FileIndex, FileIndexParams
 from core.source_storage import SourceStorage
 from core.llm_manager import LlmManager
 from core.text_extractor import TextExtractor, TextExtractorParams
+from core.parsers.chunk_splitters.base_splitter import ChunkSplitterParams
 
 import streamlit as st
-
-from langchain.text_splitter import TokenTextSplitter
 
 class BackEndCore():
     """Main back-end manager"""
@@ -60,26 +59,29 @@ class BackEndCore():
         textExtractorParams = TextExtractorParams(True)
         return self.get_text_extractor().text_extraction(uploaded_files, textExtractorParams)
 
-    def run_file_indexing(self, index_name : str, chunk_size : int, chunk_overlap : int) -> list[str]:
+    def run_file_indexing(self, index_name : str, chunk_min : int, chunk_size : int, chunk_overlap : int) -> list[str]:
         """Run file indexing"""
 
         llm_manager = self.get_llm()
         file_index = self.get_file_index()
         text_extractor = self.get_text_extractor()
 
-        text_splitter = TokenTextSplitter(
-                            chunk_size    = chunk_size,
-                            chunk_overlap = chunk_overlap,
-                            model_name    = llm_manager.get_model_name()
-                        )
-
         text_files = text_extractor.get_all_files()
+
+        fileIndexParams = FileIndexParams(
+                splitter_params= ChunkSplitterParams(
+                    chunk_min, 
+                    chunk_size, 
+                    chunk_overlap,
+                    llm_manager.get_model_name()
+                )
+        )
 
         indexing_result = file_index.run_indexing(
                 index_name,
                 text_files,
-                text_splitter,
-                llm_manager.get_embeddings()
+                llm_manager.get_embeddings(),
+                fileIndexParams
         )
 
         return indexing_result

@@ -6,3 +6,4 @@
 /core/__pycache__
 /utils/__pycache__
 /core/parsers/__pycache__
+/core/parsers/chunk_splitters/__pycache__
