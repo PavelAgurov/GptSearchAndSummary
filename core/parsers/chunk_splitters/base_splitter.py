@@ -11,8 +11,8 @@ from langchain.docstore.document import Document
 @dataclass
 class ChunkSplitterParams:
     """Parameters for chunk splitter"""
-    chunk_min_chars      : int
-    chunk_size_tokens    : int
+    chunk_min_tokens     : int
+    tokens_per_chunk     : int
     chunk_overlap_tokens : int
     model_name           : str
 
