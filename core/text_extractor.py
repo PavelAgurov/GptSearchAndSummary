@@ -14,10 +14,6 @@ from core.parsers.docx_parser import DocxParser
 from core.parsers.txt_parser import TxtParser
 from core.parsers.unst_parser import UnstructuredParser
 
-#TODO: to suppot PPT by UnstructuredFileLoader we need to install libreoffice
-#TODO: to check if UnstructuredFileLoader use external API and send information to their API
-#TODO: save additional meta-information
-
 @dataclass
 class TextExtractorParams:
     """Parameters for text extraction"""

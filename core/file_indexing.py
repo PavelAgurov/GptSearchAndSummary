@@ -13,8 +13,6 @@ from langchain.embeddings.base import Embeddings
 from langchain.vectorstores import Qdrant
 from langchain.docstore.document import Document
 
-#TODO: index metadata (page number)
-
 @dataclass
 class SearchResult:
     """Result of the search"""
