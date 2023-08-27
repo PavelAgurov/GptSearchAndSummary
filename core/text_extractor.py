@@ -2,39 +2,38 @@
     Extract plain text from source files
 """
 
-# pylint: disable=C0301,C0103,C0304,C0303,C0305,W0611,W0511
+# pylint: disable=C0301,C0103,C0304,C0303,C0305,W0611,W0511,C0411
 
 import os
 from dataclasses import dataclass
 
+from core.parsers.base_parser import BaseParser
+from core.parsers.pdf_parser import PdfParser
+from core.parsers.msg_parser import MsgParser
+from core.parsers.docx_parser import DocxParser
+from core.parsers.txt_parser import TxtParser
+from core.parsers.unst_parser import UnstructuredParser
+
 #TODO: to suppot PPT by UnstructuredFileLoader we need to install libreoffice
 #TODO: to check if UnstructuredFileLoader use external API and send information to their API
 #TODO: save additional meta-information
-
-from langchain.document_loaders import UnstructuredFileLoader
-import pypdf
-# https://github.com/python-openxml/python-docx
-import docx
-# https://github.com/TeamMsgExtractor/msg-extractor/tree/master
-import extract_msg 
 
 @dataclass
 class TextExtractorParams:
     """Parameters for text extraction"""
     override_all : bool # clean up storage before new run
 
-@dataclass
-class DocumentContentItem:
-    """Content item of the document"""
-    file_name    : str
-    page_content : str
-    page_number  : int
-    metadata     : dict
-
 class TextExtractor:
     """Converted from source files into plain text"""
 
     __DISK_FOLDER = '.plain-text'
+
+    __parser_map = {
+        '.pdf' : PdfParser,
+        '.msg' : MsgParser,
+        '.docx' : DocxParser,
+        '.txt' : TxtParser
+    }
 
     def __init__(self):
         if not os.path.isdir(self.__DISK_FOLDER):
@@ -53,72 +52,24 @@ class TextExtractor:
         for file in file_list:
             base_file_name = os.path.basename(file)
             base_file_name_lower = base_file_name.lower()
-            document_content_list = list[DocumentContentItem]()
+            _, base_file_extension = os.path.splitext(base_file_name_lower)
 
-            if base_file_name_lower.endswith('.pdf'):
-                pdf = pypdf.PdfReader(file)
-                for page in pdf.pages:
-                    text = page.extract_text()
-                    document_content_list.append(DocumentContentItem(
-                                    base_file_name,
-                                    text,
-                                    page.page_number,
-                                    {"page_number": page.page_number}
-                                )
-                    )
-                result.append(f'Converted {len(pdf.pages)} pages(s) from {base_file_name}')
-            elif base_file_name_lower.endswith('.msg'):
-                msg = extract_msg.openMsg(file)
-                document_content_list.append(DocumentContentItem(
-                                base_file_name,
-                                msg.body,
-                                1,
-                                {"to": msg.to, "cc": msg.cc, "from" : msg.sender}
-                            )
-                )
-                result.append(f'Converted e-mail from {base_file_name}')
-            elif base_file_name_lower.endswith('.docx'):
-                # docx format has no information about page number
-                # we can only save paragraphs index
-                doc = docx.Document(file)
-                full_doc_text = []
-                for paragraph in doc.paragraphs:
-                    full_doc_text.append(paragraph.text)
-                document_content_list.append(DocumentContentItem(
-                                base_file_name,
-                                '\n'.join(full_doc_text),
-                                1,
-                                {"page_number": 1}
-                            )
-                )
-                result.append(f'Converted document from {base_file_name}')
-            elif base_file_name_lower.endswith('.txt'):
-                # txt is plain text, it's not needed to convert it
-                with open(file, encoding="utf-8") as f:
-                    page_content = f.read()
-                document_content_list.append(DocumentContentItem(
-                                    base_file_name,
-                                    page_content,
-                                    1,
-                                    {}
-                                )
-                )
-                result.append(f'Copied plain text document from {base_file_name}')
-            else:
-                loader = UnstructuredFileLoader(file, mode= "single")
-                document_content_list.extend([DocumentContentItem(
-                                    base_file_name,
-                                    d.page_content,
-                                    1,
-                                    d.metadata
-                                ) for d in loader.load()]
-                )
-                result.append(f'Converted {len(document_content_list)} document(s) from {base_file_name}')
+            parser_type : BaseParser = UnstructuredParser
+            if base_file_extension in self.__parser_map:
+                parser_type = self.__parser_map[base_file_extension]
+
+            parser_instance = parser_type(file)
+            parserResult = parser_instance.parse()
             
-            for content_item in document_content_list:
-                page_file_name = f'{base_file_name}-{content_item.page_number}.txt'
-                with open(os.path.join(self.__DISK_FOLDER, page_file_name), "wt", encoding="utf-8") as f:
-                    f.write(content_item.page_content)
+            if not parserResult.error:
+                for content_item in parserResult.content:
+                    page_file_name = f'{base_file_name}-{content_item.page_number}.txt'
+                    with open(os.path.join(self.__DISK_FOLDER, page_file_name), "wt", encoding="utf-8") as f:
+                        f.write(content_item.page_content)
+
+                result.append(parserResult.message)
+            else:
+                result.append(parserResult.error)
 
         return result
     
