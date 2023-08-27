@@ -8,11 +8,8 @@ import streamlit as st
 from utils_streamlit import streamlit_hack_remove_top_space
 from utils.doc_helper import DocHelper
 
-APP_HEADER = "Demo POC"
-
 # ------------------------------- UI
-st.set_page_config(page_title= APP_HEADER, layout="wide")
-st.title(APP_HEADER)
+st.set_page_config(page_title= "Demo POC", layout="wide")
 streamlit_hack_remove_top_space()
 
 st.markdown(DocHelper().get_md("main"), unsafe_allow_html=False)
