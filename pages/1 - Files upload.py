@@ -6,7 +6,6 @@
 import streamlit as st
 
 from utils_streamlit import streamlit_hack_remove_top_space
-from strings import UPLOAD_FILE_MESSAGE
 from backend_core import BackEndCore
 
 PAGE_NAME = "Files Upload"
@@ -21,10 +20,10 @@ st.title(PAGE_NAME)
 streamlit_hack_remove_top_space()
 
 current_file_list = st.expander(label="Currently available files")
-st.info('Uploading or deleting files does not start indexing automatically')
+st.info('When files are uploaded or deleted, indexing does not start automatically')
 
 new_uploaded_files = st.file_uploader(
-    UPLOAD_FILE_MESSAGE,
+    'Choose files for indexing (PDF, Word, Txt)',
     type=["pdf", "docx", "txt", "msg"],
     accept_multiple_files= True,
     key="new_uploaded_files"
