@@ -23,7 +23,7 @@ class PdfParser(BaseParser):
                             self.base_file_name,
                             text,
                             page.page_number,
-                            {"page_number": page.page_number}
+                            {}
                         )
             )
         message = f'Converted {len(pdf.pages)} pages(s) from {self.base_file_name}'

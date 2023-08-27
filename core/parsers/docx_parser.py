@@ -17,6 +17,8 @@ class DocxParser(BaseParser):
 
         content = list[DocumentContentItem]()
 
+        # Note: docx has no page number information. We can only extract paragraphs.
+
         doc = docx.Document(self.file_name)
         full_doc_text = []
         for paragraph in doc.paragraphs:
@@ -26,7 +28,7 @@ class DocxParser(BaseParser):
                         self.base_file_name,
                         '\n'.join(full_doc_text),
                         1,
-                        {"page_number": 1}
+                        {}
                     )
 
         message = f'Converted document from {self.base_file_name}'
