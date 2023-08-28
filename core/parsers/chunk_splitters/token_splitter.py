@@ -4,27 +4,22 @@
 
 # pylint: disable=R0903,C0305,C0301
 
+import copy
+
 import tiktoken
 from tiktoken.core import Encoding
 
 from langchain.docstore.document import Document
-from langchain.text_splitter import TextSplitter
 
 from core.parsers.chunk_splitters.base_splitter import BaseChunkSplitter, ChunkSplitterParams
 
-class SpecialTokenTextSplitter(TextSplitter):
-    """Splitting text to tokens using model tokenizer with special parameters."""
+class TokenChunkSplitter(BaseChunkSplitter):
+    """Split text into chunks based on tokens"""
 
     encoding : Encoding
-    splitter_params : ChunkSplitterParams
 
     def __init__(self, splitter_params : ChunkSplitterParams):
-        super().__init__(
-            splitter_params.tokens_per_chunk,
-            splitter_params.chunk_overlap_tokens,
-            add_start_index = True
-        )
-        self.splitter_params = splitter_params
+        super().__init__(splitter_params)
         self.encoding = tiktoken.encoding_for_model(splitter_params.model_name)
 
     def split_text_on_tokens(self, text: str) -> list[str]:
@@ -47,24 +42,19 @@ class SpecialTokenTextSplitter(TextSplitter):
             chunk_ids = input_ids[start_index:cur_index]
         return splits
 
-    def split_text(self, text: str) -> list[str]:
-        """Split text into multiple components."""
-        return self.split_text_on_tokens(text)
+    def split_into_documents(self, texts: list[str], metadatas: list[dict] = None) -> list[Document]:
+        """Split input into chunks Documents"""
+        documents = list[Document]()
+        for i, text in enumerate(texts):
+            index = -1
+            for chunk in self.split_text_on_tokens(text):
+                if metadatas:
+                    metadata = copy.deepcopy(metadatas[i])
+                else:
+                    metadata = {}
+                index = text.find(chunk, index + 1)
+                metadata["p_offset"] = index
+                new_doc = Document(page_content=chunk, metadata=metadata)
+                documents.append(new_doc)
 
-class TokenChunkSplitter(BaseChunkSplitter):
-    """Split text into chunks"""
-
-    text_splitter : SpecialTokenTextSplitter
-
-    def __init__(self, splitter_params : ChunkSplitterParams):
-        super().__init__(splitter_params)
-        self.text_splitter = SpecialTokenTextSplitter(self.splitter_params)
-
-    def create_documents(self, texts: list[str], metadatas: list[dict] = None) -> list[Document]:
-        """Create documents from input"""
-        return self.text_splitter.create_documents(texts, metadatas)
-
-    def split_documents(self, documents : list[Document]) -> list[Document]:
-        """Split input into chunks"""
-        return self.text_splitter.split_documents(documents)
-
+        return documents

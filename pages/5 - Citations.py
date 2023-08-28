@@ -50,5 +50,7 @@ search_result_list = file_index.similarity_search(
 )
 
 for index, search_result in enumerate(search_result_list):
-    e = search_result_container.expander(label=f'Result {index+1} score {search_result.score}')
-    e.markdown(search_result.content)
+    e = search_result_container.expander(label=f'Result {index+1} s-score {search_result.score:0.3f}')
+    col1 , col2 = e.columns([80, 20])
+    col1.markdown(search_result.content)
+    col2.markdown(f'Metadata:<br/>{search_result.metadata}', unsafe_allow_html=True)

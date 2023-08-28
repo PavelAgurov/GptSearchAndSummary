@@ -1,7 +1,7 @@
 """
     Base chunk splitter
 """
-# pylint: disable=R0903
+# pylint: disable=R0903,C0305
 
 from abc import abstractmethod
 from dataclasses import dataclass
@@ -25,10 +25,6 @@ class BaseChunkSplitter():
         self.splitter_params = splitter_params
 
     @abstractmethod
-    def create_documents(self, texts: list[str], metadatas: list[dict] = None) -> list[Document]:
-        """Create documents from input"""
-
-    @abstractmethod
-    def split_documents(self, documents : list[Document]) -> list[Document]:
+    def split_into_documents(self, texts: list[str], metadatas: list[dict] = None) -> list[Document]:
         """Split input into chunks"""
 

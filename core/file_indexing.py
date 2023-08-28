@@ -23,8 +23,9 @@ class FileIndexParams:
 @dataclass
 class SearchResult:
     """Result of the search"""
-    content : str
-    score   : float
+    content  : str
+    score    : float
+    metadata : {}
 
 class FileIndex:
     """File index class"""
@@ -39,24 +40,26 @@ class FileIndex:
             if not os.path.isdir(self.__DISK_FOLDER):
                 os.mkdir(self.__DISK_FOLDER)
 
-    def _create_client(self, index_name : str) -> QdrantClient:
-        if self.in_memory:
-            return QdrantClient(location=":memory:")
-        return QdrantClient(path = os.path.join(self.__DISK_FOLDER, index_name))
-
-    def run_indexing(self, index_name : str, file_list : list[str], embeddings : Embeddings, index_params : FileIndexParams) -> list[str]:
+    def run_indexing(
+            self, 
+            index_name : str, 
+            file_list  : list[str], 
+            embeddings : Embeddings, 
+            index_params : FileIndexParams) -> list[str]:
         """Index files from file_list based on text_splitter and embeddings and save into DB"""
         
         log = list[str]()
 
         plain_text_list = list[str]()
+        metadatas       = list[dict]()
         for file in file_list:
             with open(file, encoding="utf-8") as f:
                 plain_text_list.append(f.read())
+            metadatas.append({"p_source" : os.path.basename(file)})
         log.append(f'Loaded {len(plain_text_list)} document(s)')
 
         token_chunk_splitter = TokenChunkSplitter(index_params.splitter_params)
-        chunks  = token_chunk_splitter.split_documents(token_chunk_splitter.create_documents(plain_text_list))
+        chunks  = token_chunk_splitter.split_into_documents(plain_text_list, metadatas)
         log.append(f'Total count of chunks {len(chunks)}')
 
         if self.in_memory:
@@ -80,11 +83,22 @@ class FileIndex:
 
         return log
     
-    def similarity_search(self, index_name : str, query: str, embeddings : Embeddings, sample_count : int, score_threshold : float):
+    def similarity_search(
+            self, 
+            index_name : str, 
+            query: str, 
+            embeddings : Embeddings, 
+            sample_count : int, 
+            score_threshold : float) -> list[SearchResult]:
         """Run similarity search"""
 
+        if self.in_memory:
+            client = QdrantClient(location=":memory:")
+        else:
+            client = QdrantClient(path = os.path.join(self.__DISK_FOLDER, index_name))
+
         qdrant = Qdrant(
-                    client= self._create_client(index_name),
+                    client= client,
                     collection_name= self.__CHUNKS_COLLECTION_NAME,
                     embeddings= embeddings
                 )
@@ -93,7 +107,7 @@ class FileIndex:
             score_threshold = None
         
         search_results : list[tuple[Document, float]] = qdrant.similarity_search_with_score(query, k= sample_count, score_threshold = score_threshold)
-        return [SearchResult(s[0].page_content, s[1]) for s in search_results]
+        return [SearchResult(s[0].page_content, s[1], s[0].metadata) for s in search_results]
 
     def get_index_name_list(self) -> list[str]:
         """Get list of available indexes"""
