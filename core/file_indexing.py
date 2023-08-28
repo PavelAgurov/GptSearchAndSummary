@@ -4,6 +4,8 @@
 # pylint: disable=C0301,C0103,C0304,C0303,W0611,W0511,R0913
 
 import os
+import json
+import dataclasses
 from dataclasses import dataclass
 
 from qdrant_client import QdrantClient
@@ -27,23 +29,39 @@ class SearchResult:
     score    : float
     metadata : {}
 
+@dataclass
+class FileIndexMeta:
+    """Meta info about index"""
+    chunkSplitterParams : FileIndexParams
+    embedding_name       : str
+
 class FileIndex:
     """File index class"""
     in_memory : bool
+    full_index_folder : str
+
+    # folder structure:
+    #   .file-index
+    #      \<index-name>
+    #         \index
+    #             <Qdrant db>
+    #         index_meta.json
 
     __DISK_FOLDER = '.file-index'
+    __INDEX_FOLDER = 'index'
     __CHUNKS_COLLECTION_NAME = 'chunks'
+    __INDEX_META_FILE = 'index_meta.json'
 
     def __init__(self, in_memory : bool):
         self.in_memory = in_memory
         if not in_memory:
-            if not os.path.isdir(self.__DISK_FOLDER):
-                os.mkdir(self.__DISK_FOLDER)
+            os.makedirs(self.__DISK_FOLDER, exist_ok=True)
 
     def run_indexing(
             self, 
             index_name : str, 
-            file_list  : list[str], 
+            file_list  : list[str],
+            embedding_name : str,
             embeddings : Embeddings, 
             index_params : FileIndexParams) -> list[str]:
         """Index files from file_list based on text_splitter and embeddings and save into DB"""
@@ -62,6 +80,19 @@ class FileIndex:
         chunks  = token_chunk_splitter.split_into_documents(plain_text_list, metadatas)
         log.append(f'Total count of chunks {len(chunks)}')
 
+        # create index folder
+        if not self.in_memory:
+            os.makedirs(os.path.join(self.__DISK_FOLDER, index_name), exist_ok=True)
+
+        # save meta data
+        fileIndexMeta = FileIndexMeta(
+            index_params,
+            embedding_name
+        )
+        with open(os.path.join(self.__DISK_FOLDER, index_name, self.__INDEX_META_FILE), "wt", encoding="utf-8") as f:
+            f.write(json.dumps(dataclasses.asdict(fileIndexMeta)))
+
+        # create db
         if self.in_memory:
             Qdrant.from_documents(
                 chunks,
@@ -75,7 +106,7 @@ class FileIndex:
             Qdrant.from_documents(
                 chunks,
                 embeddings,
-                path= os.path.join(self.__DISK_FOLDER, index_name),
+                path = os.path.join(self.__DISK_FOLDER, index_name, self.__INDEX_FOLDER),
                 collection_name= self.__CHUNKS_COLLECTION_NAME,
                 force_recreate=True
             )      
@@ -95,7 +126,7 @@ class FileIndex:
         if self.in_memory:
             client = QdrantClient(location=":memory:")
         else:
-            client = QdrantClient(path = os.path.join(self.__DISK_FOLDER, index_name))
+            client = QdrantClient(path = os.path.join(self.__DISK_FOLDER, index_name, self.__INDEX_FOLDER))
 
         qdrant = Qdrant(
                     client= client,
@@ -113,3 +144,9 @@ class FileIndex:
         """Get list of available indexes"""
         dir_list = os.listdir(self.__DISK_FOLDER)
         return dir_list
+
+    def get_file_index_meta(self, index_name : str) -> FileIndexMeta:
+        """Get meta info about index"""
+        with open(os.path.join(self.__DISK_FOLDER, index_name, self.__INDEX_META_FILE), "rt", encoding="utf-8") as f:
+            meta_str = f.read()
+        return FileIndexMeta(**json.loads(meta_str))

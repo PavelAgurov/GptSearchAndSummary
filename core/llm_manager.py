@@ -20,7 +20,6 @@ class LlmManager():
     """LLM Manager"""
 
     _MODEL_NAME = "gpt-3.5-turbo" # gpt-3.5-turbo-16k
-    _EMBEDDING = EmbeddingType.SBERT
 
     def __get_api_key(self):
         return os.environ["OPENAI_API_KEY"]
@@ -29,18 +28,19 @@ class LlmManager():
         """Return model name"""
         return self._MODEL_NAME
 
-    def get_embeddings(self):
+    def get_embeddings(self, embedding_name : str):
         """Embeddings"""
-        if self._EMBEDDING == EmbeddingType.OPENAI:
+        if embedding_name == EmbeddingType.OPENAI.value:
             # https://api.python.langchain.com/en/latest/embeddings/langchain.embeddings.openai.OpenAIEmbeddings.html
             return OpenAIEmbeddings(openai_api_key= self.__get_api_key())
-        if self._EMBEDDING == EmbeddingType.SBERT:
-            sbert_embeddings = SentenceTransformerEmbeddings(
+        
+        if embedding_name == EmbeddingType.SBERT.value:
+            return SentenceTransformerEmbeddings(
                 model_name= 'sentence-transformers/all-MiniLM-L6-v2',
                 model_kwargs={"device": "cpu"}
             )
-            return sbert_embeddings
-        raise LmmError(f'Unsupported embedding {self._EMBEDDING}')
+        
+        raise LmmError(f'Unsupported embedding {embedding_name}')
 
     def get_embedding_list(self) -> list[str]:
         """Get available embeddings"""

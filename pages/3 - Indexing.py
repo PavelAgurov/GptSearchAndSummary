@@ -28,7 +28,7 @@ file_list = st.expander(label=f'Available {len(text_files)} file(s)').empty()
 text_files_str = "".join([f'<li>{file_name}<br/>' for file_name in text_files])
 file_list.markdown(text_files_str, unsafe_allow_html=True)
 
-embedding = st.selectbox(
+embedding_name = st.selectbox(
     "Select embedding:",
     key="embedding_name",
     options= llm.get_embedding_list(),
@@ -84,6 +84,6 @@ if create_mode == CREATE_MODE_EXISTED:
     index_name = existed_index_name
 
 progress.markdown(f'Start indexing [{index_name}] ...')
-indexing_result = BackEndCore().run_file_indexing(index_name, chunk_min_chars, chunk_size_tokens, chunk_overlap_tokens)
+indexing_result = BackEndCore().run_file_indexing(embedding_name, index_name, chunk_min_chars, chunk_size_tokens, chunk_overlap_tokens)
 indexing_result_str = '<br/>'.join(indexing_result)
 progress.markdown(f'Result:<br/>{indexing_result_str}', unsafe_allow_html= True)

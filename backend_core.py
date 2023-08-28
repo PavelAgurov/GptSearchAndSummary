@@ -3,7 +3,7 @@
 """
 # pylint: disable=C0301,C0103,C0304,C0303,W0611,C0411
 
-from core.file_indexing import FileIndex, FileIndexParams
+from core.file_indexing import FileIndex, FileIndexParams, SearchResult
 from core.source_storage import SourceStorage
 from core.llm_manager import LlmManager
 from core.text_extractor import TextExtractor, TextExtractorParams
@@ -59,7 +59,12 @@ class BackEndCore():
         textExtractorParams = TextExtractorParams(True)
         return self.get_text_extractor().text_extraction(uploaded_files, textExtractorParams)
 
-    def run_file_indexing(self, index_name : str, chunk_min : int, chunk_size : int, chunk_overlap : int) -> list[str]:
+    def run_file_indexing(self, 
+                          embedding_name : str, 
+                          index_name : str, 
+                          chunk_min : int, 
+                          chunk_size : int, 
+                          chunk_overlap : int) -> list[str]:
         """Run file indexing"""
 
         llm_manager = self.get_llm()
@@ -80,8 +85,30 @@ class BackEndCore():
         indexing_result = file_index.run_indexing(
                 index_name,
                 text_files,
-                llm_manager.get_embeddings(),
+                embedding_name,
+                llm_manager.get_embeddings(embedding_name),
                 fileIndexParams
         )
 
         return indexing_result
+
+    def similarity_search(
+            self, 
+            index_name : str, 
+            query: str, 
+            sample_count : int, 
+            score_threshold : float) -> list[SearchResult]:
+        """Run similarity search"""
+
+        llm_manager = self.get_llm()
+        file_index = self.get_file_index()
+
+        fileIndexMeta = file_index.get_file_index_meta(index_name)
+
+        return file_index.similarity_search(
+            index_name,
+            query, 
+            llm_manager.get_embeddings(fileIndexMeta.embedding_name), 
+            sample_count, 
+            score_threshold
+        )

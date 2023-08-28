@@ -10,7 +10,6 @@ from backend_core import BackEndCore
 PAGE_NAME = "Citations"
 
 file_index = BackEndCore.get_file_index()
-llm_manager = BackEndCore.get_llm()
 
 # ------------------------------- UI Setup
 st.set_page_config(page_title= PAGE_NAME, layout="wide")
@@ -41,13 +40,12 @@ score_threshold = threshold
 if score_threshold == 0:
     score_threshold = None
 
-search_result_list = file_index.similarity_search(
-    index_name,
-    query, 
-    llm_manager.get_embeddings(), 
-    sample_count, 
-    score_threshold
-)
+search_result_list = BackEndCore().similarity_search(
+                        index_name,
+                        query, 
+                        sample_count, 
+                        score_threshold
+                     )
 
 for index, search_result in enumerate(search_result_list):
     e = search_result_container.expander(label=f'Result {index+1} s-score {search_result.score:0.3f}')
