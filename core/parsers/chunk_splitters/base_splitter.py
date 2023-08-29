@@ -25,6 +25,6 @@ class BaseChunkSplitter():
         self.splitter_params = splitter_params
 
     @abstractmethod
-    def split_into_documents(self, texts: list[str], metadatas: list[dict] = None) -> list[Document]:
+    def split_into_documents(self, input_with_meta : list[tuple([str, {}])]) -> list[Document]:
         """Split input into chunks"""
 

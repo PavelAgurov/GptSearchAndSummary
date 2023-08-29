@@ -71,8 +71,6 @@ class BackEndCore():
         file_index = self.get_file_index()
         text_extractor = self.get_text_extractor()
 
-        text_files = text_extractor.get_all_files()
-
         fileIndexParams = FileIndexParams(
                 splitter_params= ChunkSplitterParams(
                     chunk_min, 
@@ -82,9 +80,11 @@ class BackEndCore():
                 )
         )
 
+        input_with_meta = text_extractor.get_input_with_meta()
+
         indexing_result = file_index.run_indexing(
                 index_name,
-                text_files,
+                input_with_meta,
                 embedding_name,
                 llm_manager.get_embeddings(embedding_name),
                 fileIndexParams

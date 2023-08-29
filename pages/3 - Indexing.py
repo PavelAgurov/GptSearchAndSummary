@@ -22,7 +22,7 @@ st.set_page_config(page_title= PAGE_NAME, layout="wide")
 st.title(PAGE_NAME)
 streamlit_hack_remove_top_space()
 
-text_files = text_extractor.get_all_files(True)
+text_files = text_extractor.get_all_source_files(True)
 
 file_list = st.expander(label=f'Available {len(text_files)} file(s)').empty()
 text_files_str = "".join([f'<li>{file_name}<br/>' for file_name in text_files])

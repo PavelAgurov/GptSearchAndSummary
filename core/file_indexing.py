@@ -59,8 +59,8 @@ class FileIndex:
 
     def run_indexing(
             self, 
-            index_name : str, 
-            file_list  : list[str],
+            index_name  : str,
+            input_with_meta : list[tuple([str, {}])],
             embedding_name : str,
             embeddings : Embeddings, 
             index_params : FileIndexParams) -> list[str]:
@@ -68,16 +68,10 @@ class FileIndex:
         
         log = list[str]()
 
-        plain_text_list = list[str]()
-        metadatas       = list[dict]()
-        for file in file_list:
-            with open(file, encoding="utf-8") as f:
-                plain_text_list.append(f.read())
-            metadatas.append({"p_source" : os.path.basename(file)})
-        log.append(f'Loaded {len(plain_text_list)} document(s)')
+        log.append(f'Loaded {len(input_with_meta)} document(s)')
 
         token_chunk_splitter = TokenChunkSplitter(index_params.splitter_params)
-        chunks  = token_chunk_splitter.split_into_documents(plain_text_list, metadatas)
+        chunks  = token_chunk_splitter.split_into_documents(input_with_meta)
         log.append(f'Total count of chunks {len(chunks)}')
 
         # create index folder

@@ -42,19 +42,21 @@ class TokenChunkSplitter(BaseChunkSplitter):
             chunk_ids = input_ids[start_index:cur_index]
         return splits
 
-    def split_into_documents(self, texts: list[str], metadatas: list[dict] = None) -> list[Document]:
+    def split_into_documents(self, input_with_meta : list[tuple([str, {}])]) -> list[Document]:
         """Split input into chunks Documents"""
         documents = list[Document]()
-        for i, text in enumerate(texts):
+        for input_item in input_with_meta:
             index = -1
-            for chunk in self.split_text_on_tokens(text):
-                if metadatas:
-                    metadata = copy.deepcopy(metadatas[i])
+            input_text = input_item[0]
+            input_meta = input_item[1]
+            for chunk in self.split_text_on_tokens(input_text):
+                if input_meta:
+                    meta = copy.deepcopy(input_meta)
                 else:
-                    metadata = {}
-                index = text.find(chunk, index + 1)
-                metadata["p_offset"] = index
-                new_doc = Document(page_content=chunk, metadata=metadata)
+                    meta = {}
+                index = input_text.find(chunk, index + 1)
+                meta["p_offset"] = index
+                new_doc = Document(page_content=chunk, metadata= meta)
                 documents.append(new_doc)
 
         return documents
