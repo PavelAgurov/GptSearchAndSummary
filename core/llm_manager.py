@@ -10,8 +10,8 @@ from langchain.embeddings import SentenceTransformerEmbeddings
 
 class EmbeddingType(Enum):
     """Types of embeddings"""
-    OPENAI = "OpenAIEmbeddings"
-    SBERT = "SBERT"
+    OPENAI = "Open AI Embeddings"
+    SBERT = "SBERT (https://www.sbert.net/)"
 
 class LmmError(Exception):
     """Lmm related exception"""
@@ -35,6 +35,7 @@ class LlmManager():
             return OpenAIEmbeddings(openai_api_key= self.__get_api_key())
         
         if embedding_name == EmbeddingType.SBERT.value:
+            # https://www.sbert.net/
             return SentenceTransformerEmbeddings(
                 model_name= 'sentence-transformers/all-MiniLM-L6-v2',
                 model_kwargs={"device": "cpu"}

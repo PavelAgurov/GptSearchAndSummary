@@ -38,6 +38,10 @@ class TextExtractor:
         if not os.path.isdir(self.__DISK_FOLDER):
             os.mkdir(self.__DISK_FOLDER)
 
+    def __get_meta_file_name(self, source_file_name : str) -> str:
+        """Create file name for meta info"""
+        return f'{source_file_name}{self.__META_EXT}'
+
     def text_extraction(self, file_list : list[str], params : TextExtractorParams) -> list[str]:
         """Convert into plain text"""
         
@@ -76,7 +80,7 @@ class TextExtractor:
                     metadata["page_number"] = content_item.page_number
                     metadata["p_source"] = os.path.basename(page_file_name)
 
-                    meta_file_name = f'{page_file_name}{self.__META_EXT}'
+                    meta_file_name = self.__get_meta_file_name(page_file_name)
                     with open(os.path.join(self.__DISK_FOLDER, meta_file_name), "wt", encoding="utf-8") as f:
                         f.write(json.dumps(metadata))
 
@@ -100,7 +104,7 @@ class TextExtractor:
         result = list[tuple([str, {}])]()
         for source_file in source_files:
 
-            metadata_file = f'{source_file}{self.__META_EXT}'
+            metadata_file = self.__get_meta_file_name(source_file)
             with open(metadata_file, encoding="utf-8") as f:
                 metadata = json.loads(f.read())
             with open(source_file, encoding="utf-8") as f:

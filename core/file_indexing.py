@@ -5,8 +5,7 @@
 
 import os
 import json
-import dataclasses
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 
 from qdrant_client import QdrantClient
 
@@ -79,12 +78,12 @@ class FileIndex:
             os.makedirs(os.path.join(self.__DISK_FOLDER, index_name), exist_ok=True)
 
         # save meta data
-        fileIndexMeta = FileIndexMeta(
+        file_index_meta = FileIndexMeta(
             index_params,
             embedding_name
         )
         with open(os.path.join(self.__DISK_FOLDER, index_name, self.__INDEX_META_FILE), "wt", encoding="utf-8") as f:
-            f.write(json.dumps(dataclasses.asdict(fileIndexMeta)))
+            json.dump(asdict(file_index_meta), f, indent=4)
 
         # create db
         if self.in_memory:
@@ -142,5 +141,11 @@ class FileIndex:
     def get_file_index_meta(self, index_name : str) -> FileIndexMeta:
         """Get meta info about index"""
         with open(os.path.join(self.__DISK_FOLDER, index_name, self.__INDEX_META_FILE), "rt", encoding="utf-8") as f:
-            meta_str = f.read()
-        return FileIndexMeta(**json.loads(meta_str))
+            json_data = json.load(f)
+
+        return FileIndexMeta(
+            FileIndexParams(
+                ChunkSplitterParams(**json_data['chunkSplitterParams']['splitter_params'])
+            ),
+            json_data['embedding_name']
+        )

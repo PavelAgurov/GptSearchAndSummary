@@ -24,6 +24,15 @@ index_name = st.selectbox(
     label_visibility="visible"
 )
 
+if index_name:
+    index_info = file_index.get_file_index_meta(index_name)
+    splitter_params= index_info.chunkSplitterParams.splitter_params
+    st.info(f'Embedding name: {index_info.embedding_name}. \
+            Chunk min={splitter_params.chunk_min_tokens}, \
+            chunk size={splitter_params.tokens_per_chunk},\
+            overlap={splitter_params.chunk_overlap_tokens}'
+    )
+
 sample_count = st.number_input(label="Count of samples", min_value=1, max_value=100, value=10)
 threshold = st.number_input(label="Threshold", min_value=0.00, max_value=1.00, value=0.50, step=0.01, format="%.2f")
 
