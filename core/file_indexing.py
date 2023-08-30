@@ -24,9 +24,9 @@ class FileIndexParams:
 @dataclass
 class SearchResult:
     """Result of the search"""
-    content  : str
-    score    : float
-    metadata : {}
+    content   : str
+    score     : float
+    metadata  : {}
 
 @dataclass
 class FileIndexMeta:

@@ -3,13 +3,24 @@
 """
 # pylint: disable=C0301,C0103,C0304,C0303,W0611,C0411
 
-from core.file_indexing import FileIndex, FileIndexParams, SearchResult
+from dataclasses import dataclass
+
+from core.file_indexing import FileIndex, FileIndexParams
 from core.source_storage import SourceStorage
 from core.llm_manager import LlmManager
 from core.text_extractor import TextExtractor, TextExtractorParams
 from core.parsers.chunk_splitters.base_splitter import ChunkSplitterParams
 
 import streamlit as st
+
+@dataclass
+class BackendChunk:
+    """Chunk of search result"""
+    content   : str
+    score     : float
+    metadata  : {}
+    llm_score : float
+    llm_expl  : str
 
 class BackEndCore():
     """Main back-end manager"""
@@ -97,7 +108,8 @@ class BackEndCore():
             index_name : str, 
             query: str, 
             sample_count : int, 
-            score_threshold : float) -> list[SearchResult]:
+            score_threshold : float,
+            add_llm_score : bool) -> list[BackendChunk]:
         """Run similarity search"""
 
         llm_manager = self.get_llm()
@@ -105,10 +117,29 @@ class BackEndCore():
 
         fileIndexMeta = file_index.get_file_index_meta(index_name)
 
-        return file_index.similarity_search(
+        similarity_result = file_index.similarity_search(
             index_name,
             query, 
             llm_manager.get_embeddings(fileIndexMeta.embedding_name), 
             sample_count, 
             score_threshold
         )
+
+        chunk_list = [
+            BackendChunk(
+                similarity_item.content,
+                similarity_item.score,
+                similarity_item.metadata,
+                0,
+                None
+            )
+            for similarity_item in similarity_result
+        ]
+
+        if add_llm_score:
+            for chunk in chunk_list:
+                relevance_score = llm_manager.get_relevance_score(query, chunk.content)
+                chunk.llm_score = relevance_score.llm_score
+                chunk.llm_expl = relevance_score.llm_expl
+
+        return chunk_list

@@ -2,8 +2,9 @@
     LLM
 """
 
-from enum import Enum
 import os
+from enum import Enum
+from dataclasses import dataclass
 
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.embeddings import SentenceTransformerEmbeddings
@@ -13,8 +14,14 @@ class EmbeddingType(Enum):
     OPENAI = "Open AI Embeddings"
     SBERT = "SBERT (https://www.sbert.net/)"
 
-class LmmError(Exception):
+class LlmError(Exception):
     """Lmm related exception"""
+
+@dataclass
+class LlmRelevanceScore:
+    """Chunk of search result"""
+    llm_score : float
+    llm_expl  : str
 
 class LlmManager():
     """LLM Manager"""
@@ -41,8 +48,12 @@ class LlmManager():
                 model_kwargs={"device": "cpu"}
             )
         
-        raise LmmError(f'Unsupported embedding {embedding_name}')
+        raise LlmError(f'Unsupported embedding {embedding_name}')
 
     def get_embedding_list(self) -> list[str]:
         """Get available embeddings"""
         return [e.value for e in EmbeddingType]
+    
+    def get_relevance_score(self, query : str, content : str) -> LlmRelevanceScore:
+        """Get relevance score betwee query and content"""
+        return LlmRelevanceScore(0.5, "explanation")
