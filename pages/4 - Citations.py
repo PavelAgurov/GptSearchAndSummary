@@ -41,7 +41,7 @@ col41, col42, _ = st.columns([20, 20, 80])
 add_llm_score = col41.checkbox(label="Add LLM score", value=True)
 llm_threshold = col42.number_input(label="LLM Threshold", min_value=0.00, max_value=1.00, value=0.50, step=0.01, format="%.2f", disabled=not add_llm_score)
 
-build_summary = st.checkbox(label="Build summary")
+build_summary = st.checkbox(label="Build summary", value=True)
 
 query = st.text_input(label="Query")
 
@@ -49,7 +49,9 @@ col21, col22 = st.columns(2)
 run_button = col21.button(label="Run")
 run_status = col22.empty()
 
-search_result_container = st.container()
+search_result_container  = st.container()
+summary_result_container = st.container()
+
 
 def show_status_callback(status_str : str):
     """Show progress/status"""
@@ -88,3 +90,7 @@ for index, chunk_item in enumerate(chunk_list):
     if add_llm_score:
         col32.divider()
         col32.markdown(f'LLM explanation:<br/>{chunk_item.llm_expl}', unsafe_allow_html=True)
+
+if build_summary:
+    summary = BackEndCore().build_summary(chunk_list)
+    summary_result_container.markdown(summary)

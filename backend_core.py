@@ -153,3 +153,9 @@ class BackEndCore():
 
         show_status_callback('')
         return chunk_list
+
+    def build_summary(self, chunk_list : list[BackendChunk]) -> str:
+        """Build LLM summary"""
+        llm_manager = self.get_llm()
+        summary_result = llm_manager.build_summary([c.content for c in chunk_list])
+        return summary_result.summary

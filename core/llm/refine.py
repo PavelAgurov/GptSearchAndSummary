@@ -1,11 +1,10 @@
 """
-    Refine implementation
+    Refine answer
 """
-# pylint: disable=C0301,C0103,C0304,C0303,W0611,C0411
+# pylint: disable=C0301,C0103,C0304,C0303,W0611,W0511,R0913,R0402
 
-import json
 from dataclasses import dataclass
-
+import json
 from langchain import PromptTemplate
 from langchain.chains import LLMChain
 from langchain.callbacks import get_openai_callback
@@ -64,33 +63,33 @@ class RefineChain():
         self.refine_combine_chain = LLMChain(llm= llm, prompt= refine_combine_prompt)
 
     def log(self, steps, include_steps, step_message):
-        """Add log item into steps"""
+        """Add log item"""
         if include_steps:
             steps.append(step_message)
         return steps
 
-    def run(self, docs : list, include_steps : bool = False) -> RefineResult:
+    def run(self, docs : list, enable_logger : bool = False) -> RefineResult:
         """Run refine"""
         tokens_used = 0
         summary = ""
         steps = []
 
         try:
-            steps = self.log(steps, include_steps, 'Process doc #1')
+            steps = self.log(steps, enable_logger, 'Process doc #1')
             with get_openai_callback() as cb:
                 summary_result = self.refine_initial_chain.run(text = docs[0])
             tokens_used += cb.total_tokens
-            steps = self.log(steps, include_steps, summary_result)
-            steps = self.log(steps, include_steps, f'Doc count {len(docs)}')
+            steps = self.log(steps, enable_logger, summary_result)
+            steps = self.log(steps, enable_logger, f'Doc count {len(docs)}')
             summary_json = json.loads(get_fixed_json(summary_result))
             summary = summary_json["summary"]
 
             for index, doc in enumerate(docs[1:]):
-                steps = self.log(steps, include_steps, f'Process doc #{index+2}')
+                steps = self.log(steps, enable_logger, f'Process doc #{index+2}')
                 with get_openai_callback() as cb:
                     refine_result = self.refine_combine_chain.run(existing_summary = summary, more_context = doc)
                 tokens_used += cb.total_tokens
-                steps = self.log(steps, include_steps, refine_result)
+                steps = self.log(steps, enable_logger, refine_result)
                 refined_json = json.loads(get_fixed_json(refine_result))
                 refined_useful = not refined_json["not_useful"]
                 if refined_useful:
@@ -98,5 +97,5 @@ class RefineChain():
             
             return RefineResult(summary, tokens_used, steps = steps)
         except Exception as error: # pylint: disable=W0718
-            steps = self.log(steps, include_steps, error)
+            steps = self.log(steps, enable_logger, error)
             return RefineResult(summary, tokens_used, error= error, steps = steps)
