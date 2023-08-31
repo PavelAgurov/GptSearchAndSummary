@@ -1,1 +1,1 @@
-"""LLM Prompts"""
+"""LLM related"""

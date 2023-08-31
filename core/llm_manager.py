@@ -5,7 +5,6 @@
 # pylint: disable=C0301,C0103,C0304,C0303,W0611,W0511,R0913,R0402
 
 import os
-import re
 import json
 from enum import Enum
 from dataclasses import dataclass
@@ -21,6 +20,7 @@ from langchain.chat_models import ChatOpenAI
 from langchain.chains import LLMChain
 
 import core.llm.prompts as prompts
+from core.llm.llm_utils import get_fixed_json
 
 class EmbeddingType(Enum):
     """Types of embeddings"""
@@ -78,18 +78,6 @@ class LlmManager():
     def get_embedding_list(self) -> list[str]:
         """Get available embeddings"""
         return [e.value for e in EmbeddingType]
-    
-    def get_fixed_json(self, text : str) -> str:
-        """Fix LLM json"""
-        text = re.sub(r"},\s*]", "}]", text)
-        open_bracket = min(text.find('['), text.find('{'))
-        if open_bracket == -1:
-            return text
-                
-        close_bracket = max(text.rfind(']'), text.rfind('}'))
-        if close_bracket == -1:
-            return text
-        return text[open_bracket:close_bracket+1]
 
     def get_relevance_score(self, query : str, content : str) -> LlmRelevanceScore:
         """Get relevance score betwee query and content"""
@@ -110,12 +98,12 @@ class LlmManager():
                     "content" : content
                 })
             try:
-                relevance_json = json.loads(self.get_fixed_json(relevance_result))
+                relevance_json = json.loads(get_fixed_json(relevance_result))
                 return LlmRelevanceScore(
                             relevance_json['score'], 
                             relevance_json['explanation'], 
                             llm_callback.total_tokens, 
                             None
                         )
-            except Exception as error:
+            except Exception as error: # pylint: disable=W0718
                 return LlmRelevanceScore(0, None, llm_callback.total_tokens, error)

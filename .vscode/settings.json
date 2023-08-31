@@ -1,0 +1,8 @@
+{
+    "python.analysis.extraPaths": [
+        "./core",
+        "./core/llm",
+        "./core/parsers",
+        "./core/utils"
+    ]
+}

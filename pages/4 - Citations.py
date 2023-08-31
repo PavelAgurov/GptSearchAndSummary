@@ -35,9 +35,13 @@ if index_name:
 
 col11, col12 = st.columns(2)
 sample_count = col11.number_input(label="Count of samples", min_value=1, max_value=100, value=10)
-threshold = col12.number_input(label="Threshold", min_value=0.00, max_value=1.00, value=0.50, step=0.01, format="%.2f")
+threshold = col12.number_input(label="Similarity threshold", min_value=0.00, max_value=1.00, value=0.50, step=0.01, format="%.2f")
 
-add_llm_score = st.checkbox(label="Add LLM score", value=True)
+col41, col42, _ = st.columns([20, 20, 80])
+add_llm_score = col41.checkbox(label="Add LLM score", value=True)
+llm_threshold = col42.number_input(label="LLM Threshold", min_value=0.00, max_value=1.00, value=0.50, step=0.01, format="%.2f", disabled=not add_llm_score)
+
+build_summary = st.checkbox(label="Build summary")
 
 query = st.text_input(label="Query")
 
@@ -66,6 +70,7 @@ chunk_list = BackEndCore().similarity_search(
                         sample_count, 
                         score_threshold,
                         add_llm_score,
+                        llm_threshold,
                         show_status_callback
                      )
 

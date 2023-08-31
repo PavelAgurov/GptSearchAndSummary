@@ -110,6 +110,7 @@ class BackEndCore():
             sample_count : int, 
             score_threshold : float,
             add_llm_score : bool,
+            llm_threshold : float,
             show_status_callback : callable) -> list[BackendChunk]:
         """Run similarity search"""
 
@@ -140,11 +141,15 @@ class BackEndCore():
         ]
 
         if add_llm_score:
+            llm_chunk_list = []
             for chunk_index, chunk in enumerate(chunk_list):
                 show_status_callback(f'LLM score {chunk_index+1}/{len(chunk_list)}...')
                 relevance_score = llm_manager.get_relevance_score(query, chunk.content)
-                chunk.llm_score = relevance_score.llm_score
-                chunk.llm_expl = relevance_score.llm_expl
+                if relevance_score.llm_score >= llm_threshold:
+                    chunk.llm_score = relevance_score.llm_score
+                    chunk.llm_expl = relevance_score.llm_expl
+                    llm_chunk_list.append(chunk)
+            chunk_list = llm_chunk_list
 
         show_status_callback('')
         return chunk_list
