@@ -33,15 +33,23 @@ if index_name:
             overlap={splitter_params.chunk_overlap_tokens}'
     )
 
-col1, col2 = st.columns(2)
-sample_count = col1.number_input(label="Count of samples", min_value=1, max_value=100, value=10)
-threshold = col2.number_input(label="Threshold", min_value=0.00, max_value=1.00, value=0.50, step=0.01, format="%.2f")
+col11, col12 = st.columns(2)
+sample_count = col11.number_input(label="Count of samples", min_value=1, max_value=100, value=10)
+threshold = col12.number_input(label="Threshold", min_value=0.00, max_value=1.00, value=0.50, step=0.01, format="%.2f")
 
-add_llm_score = st.checkbox(label="Add LLM score")
+add_llm_score = st.checkbox(label="Add LLM score", value=True)
 
 query = st.text_input(label="Query")
-run_button = st.button(label="Run")
+
+col21, col22 = st.columns(2)
+run_button = col21.button(label="Run")
+run_status = col22.empty()
+
 search_result_container = st.container()
+
+def show_status_callback(status_str : str):
+    """Show progress/status"""
+    run_status.markdown(status_str)
 
 # ------------------------------- App
 
@@ -57,17 +65,21 @@ chunk_list = BackEndCore().similarity_search(
                         query, 
                         sample_count, 
                         score_threshold,
-                        add_llm_score
+                        add_llm_score,
+                        show_status_callback
                      )
+
+if add_llm_score:
+    chunk_list.sort(key=lambda x: x.llm_score, reverse=True)
 
 for index, chunk_item in enumerate(chunk_list):
     chunk_label = f'Result {index+1} s-score {chunk_item.score:0.3f}'
     if add_llm_score:
         chunk_label = f'{chunk_label} llm-score {chunk_item.llm_score:0.3f}'
     e = search_result_container.expander(label=chunk_label)
-    col1 , col2 = e.columns([80, 20])
-    col1.markdown(chunk_item.content)
-    col2.markdown(f'Metadata:<br/>{chunk_item.metadata}', unsafe_allow_html=True)
+    col31 , col32 = e.columns([80, 20])
+    col31.markdown(chunk_item.content)
+    col32.markdown(f'Metadata:<br/>{chunk_item.metadata}', unsafe_allow_html=True)
     if add_llm_score:
-        col2.divider()
-        col2.markdown(f'LLM explanation:<br/>{chunk_item.llm_expl}', unsafe_allow_html=True)
+        col32.divider()
+        col32.markdown(f'LLM explanation:<br/>{chunk_item.llm_expl}', unsafe_allow_html=True)

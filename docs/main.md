@@ -100,3 +100,8 @@ streamlit run main.py
 - [ ] test set score (to compare facts?)
 - [ ] user's feedback for chunks
 
+### 9. Backlog: extended
+
+- [ ] load KB data
+
+

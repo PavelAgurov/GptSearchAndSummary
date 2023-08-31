@@ -109,14 +109,17 @@ class BackEndCore():
             query: str, 
             sample_count : int, 
             score_threshold : float,
-            add_llm_score : bool) -> list[BackendChunk]:
+            add_llm_score : bool,
+            show_status_callback : callable) -> list[BackendChunk]:
         """Run similarity search"""
 
         llm_manager = self.get_llm()
         file_index = self.get_file_index()
 
+        show_status_callback('Load index...')
         fileIndexMeta = file_index.get_file_index_meta(index_name)
 
+        show_status_callback('Similarity search...')
         similarity_result = file_index.similarity_search(
             index_name,
             query, 
@@ -137,9 +140,11 @@ class BackEndCore():
         ]
 
         if add_llm_score:
-            for chunk in chunk_list:
+            for chunk_index, chunk in enumerate(chunk_list):
+                show_status_callback(f'LLM score {chunk_index+1}/{len(chunk_list)}...')
                 relevance_score = llm_manager.get_relevance_score(query, chunk.content)
                 chunk.llm_score = relevance_score.llm_score
                 chunk.llm_expl = relevance_score.llm_expl
 
+        show_status_callback('')
         return chunk_list
