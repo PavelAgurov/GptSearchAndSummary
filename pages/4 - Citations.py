@@ -92,5 +92,5 @@ for index, chunk_item in enumerate(chunk_list):
         col32.markdown(f'LLM explanation:<br/>{chunk_item.llm_expl}', unsafe_allow_html=True)
 
 if build_summary:
-    summary = BackEndCore().build_summary(chunk_list)
+    summary = BackEndCore().build_answer(query, chunk_list)
     summary_result_container.markdown(summary)

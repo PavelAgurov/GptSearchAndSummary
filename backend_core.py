@@ -51,7 +51,7 @@ class BackEndCore():
         return st.session_state[cls._SESSION_SOURCE_INDEX]
 
     @classmethod
-    def get_llm(cls) -> LlmManager:
+    def get_llm_manager(cls) -> LlmManager:
         """Get LLM Manager"""
         if cls._SESSION_LLM not in st.session_state:
             st.session_state[cls._SESSION_LLM] = LlmManager()
@@ -78,7 +78,7 @@ class BackEndCore():
                           chunk_overlap : int) -> list[str]:
         """Run file indexing"""
 
-        llm_manager = self.get_llm()
+        llm_manager = self.get_llm_manager()
         file_index = self.get_file_index()
         text_extractor = self.get_text_extractor()
 
@@ -114,7 +114,7 @@ class BackEndCore():
             show_status_callback : callable) -> list[BackendChunk]:
         """Run similarity search"""
 
-        llm_manager = self.get_llm()
+        llm_manager = self.get_llm_manager()
         file_index = self.get_file_index()
 
         show_status_callback('Load index...')
@@ -154,8 +154,8 @@ class BackEndCore():
         show_status_callback('')
         return chunk_list
 
-    def build_summary(self, chunk_list : list[BackendChunk]) -> str:
-        """Build LLM summary"""
-        llm_manager = self.get_llm()
-        summary_result = llm_manager.build_summary([c.content for c in chunk_list])
-        return summary_result.summary
+    def build_answer(self, question : str, chunk_list : list[BackendChunk]) -> str:
+        """Build LLM answer"""
+        llm_manager = self.get_llm_manager()
+        answer_result = llm_manager.build_answer(question, [c.content for c in chunk_list])
+        return answer_result.answer

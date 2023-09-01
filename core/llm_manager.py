@@ -21,7 +21,7 @@ from langchain.chains import LLMChain
 
 import core.llm.prompts as prompts
 from core.llm.llm_utils import get_fixed_json
-from core.llm.refine import RefineChain, RefineResult
+from core.llm.refine_answer import RefineAnswerChain, RefineAnswerResult
 
 class EmbeddingType(Enum):
     """Types of embeddings"""
@@ -43,7 +43,7 @@ class LlmManager():
     """LLM Manager"""
 
     llm_relevance : ChatOpenAI
-    llm_summary   : ChatOpenAI
+    llm_answer   : ChatOpenAI
     relevance_prompt : PromptTemplate
     relevance_chain : LLMChain
 
@@ -54,7 +54,7 @@ class LlmManager():
         self.llm_relevance  = None
         self.relevance_prompt = None
         self.relevance_chain = None
-        self.llm_summary = None
+        self.llm_answer = None
 
     def __get_api_key(self):
         return os.environ["OPENAI_API_KEY"]
@@ -111,16 +111,16 @@ class LlmManager():
             except Exception as error: # pylint: disable=W0718
                 return LlmRelevanceScore(0, None, llm_callback.total_tokens, error)
             
-    def build_summary(self, chunk_list : list[str]) -> RefineResult:
+    def build_answer(self, question : str, chunk_list : list[str]) -> RefineAnswerResult:
         """Build LLM summary"""
 
-        if not self.llm_summary:
-            self.llm_summary = ChatOpenAI(
+        if not self.llm_answer:
+            self.llm_answer = ChatOpenAI(
                     openai_api_key= self.__get_api_key(),
                     model_name  = self._MODEL_NAME,
                     temperature = 0,
                     max_tokens  = 1000
             )
 
-        refine_chain = RefineChain(self.llm_summary)
-        return refine_chain.run(chunk_list, False)
+        refine_chain = RefineAnswerChain(self.llm_answer)
+        return refine_chain.run(question, chunk_list, False)

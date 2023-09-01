@@ -15,7 +15,7 @@ CREATE_MODE_EXISTED = "Existed"
 
 text_extractor = BackEndCore.get_text_extractor()
 file_index = BackEndCore.get_file_index()
-llm = BackEndCore.get_llm()
+llm = BackEndCore.get_llm_manager()
 # ------------------------------- UI Setup
 
 st.set_page_config(page_title= PAGE_NAME, layout="wide")
