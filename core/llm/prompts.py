@@ -13,7 +13,7 @@ Content is only relevant when you have FULL DIRECT answer to the query, not a re
 ###
 Provide result in JSON:
 {{
-    "score" : score how provided content is relevant to the query
+    "score" : score how provided content is relevant to the query,
     "explanation" : "explanation why provided content is relevant to the query or why not"
 }}
 ###
