@@ -68,7 +68,15 @@ if create_mode == CREATE_MODE_EXISTED:
         label_visibility="visible"
     )
 else:
-    new_index_name = st.text_input(label="Enter index name")
+    new_index_name = st.text_input(label="Enter index name:")
+
+col1e, col2e = st.columns([10,50])
+run_button = col1e.button(label="Run indexing")
+if create_mode == CREATE_MODE_EXISTED and existed_index_name:
+    delete_button = col2e.button(label="Delete index")
+    if delete_button:
+        file_index.delete_index(existed_index_name)
+        st.experimental_rerun()
 
 progress = st.empty()
 
@@ -76,7 +84,6 @@ if not text_files:
     progress.markdown('There are no files for indexing.')
     st.stop()
 
-run_button = st.button(label="Run indexing")
 if not run_button:
     st.stop()
 

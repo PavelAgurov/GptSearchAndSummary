@@ -4,6 +4,7 @@
 # pylint: disable=C0301,C0103,C0304,C0303,W0611,W0511,R0913
 
 import os
+import shutil
 from dataclasses import dataclass
 from dataclasses_json import dataclass_json
 
@@ -37,6 +38,7 @@ class FileIndexMeta:
     chunkSplitterParams : FileIndexParams
     document_set        : str
     embedding_name      : str
+    error               : str = None
 
 class FileIndex:
     """File index class"""
@@ -148,8 +150,15 @@ class FileIndex:
 
     def get_file_index_meta(self, index_name : str) -> FileIndexMeta:
         """Get meta info about index"""
-        with open(os.path.join(self.__DISK_FOLDER, index_name, self.__INDEX_META_FILE), "rt", encoding="utf-8") as f:
-            json_data = f.read()
-        file_index_meta = FileIndexMeta.from_json(json_data) # pylint: disable=E1101
-        return file_index_meta
+        try:
+            with open(os.path.join(self.__DISK_FOLDER, index_name, self.__INDEX_META_FILE), "rt", encoding="utf-8") as f:
+                json_data = f.read()
+            file_index_meta = FileIndexMeta.from_json(json_data) # pylint: disable=E1101
+            return file_index_meta
+        except Exception as error: # pylint: disable=W0718
+            return FileIndexMeta(None, None, None, error)
     
+    def delete_index(self, index_name : str):
+        """Delete existed index"""
+        index_folder = os.path.join(self.__DISK_FOLDER, index_name)
+        shutil.rmtree(index_folder)

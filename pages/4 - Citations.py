@@ -28,13 +28,17 @@ index_name = st.selectbox(
 
 if index_name:
     index_info = file_index.get_file_index_meta(index_name)
-    splitter_params= index_info.chunkSplitterParams.splitter_params
-    st.info(f'Document set: {index_info.document_set}.\
-            Embedding name: {index_info.embedding_name}. \
-            Chunk min={splitter_params.chunk_min_tokens}, \
-            chunk size={splitter_params.tokens_per_chunk},\
-            overlap={splitter_params.chunk_overlap_tokens}'
-    )
+    if not index_info.error:
+        splitter_params= index_info.chunkSplitterParams.splitter_params
+        st.info(f'Document set: {index_info.document_set}.\
+                Embedding name: {index_info.embedding_name}. \
+                Chunk min={splitter_params.chunk_min_tokens}, \
+                chunk size={splitter_params.tokens_per_chunk},\
+                overlap={splitter_params.chunk_overlap_tokens}'
+        )
+    else:
+        st.info(index_info.error)
+        st.stop()
 
 col11, col12 = st.columns(2)
 sample_count = col11.number_input(label="Count of samples", min_value=1, max_value=100, value=10)
