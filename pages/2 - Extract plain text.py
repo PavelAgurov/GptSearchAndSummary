@@ -10,33 +10,42 @@ from backend_core import BackEndCore
 
 PAGE_NAME = "Extract plain text"
 
+# ------------------------------- Core
+
+source_index = BackEndCore.get_source_storage()
+document_set_manager = BackEndCore.get_document_set_manager()
+
 # ------------------------------- UI Setup
 
 st.set_page_config(page_title= PAGE_NAME, layout="wide")
 st.title(PAGE_NAME)
 streamlit_hack_remove_top_space()
 
-file_list = st.expander(label="Available files").empty()
+document_set_manager.load()
+selected_document_set = st.selectbox(
+    label="Data set:",
+    options=document_set_manager.get_all_names(),
+    key="selected_document_set_extract"
+)
 
-run_button = st.button(label="Run extraction")
+uploaded_files = source_index.get_all_files(selected_document_set, True)
+
+file_list = st.expander(label=f"Available {len(uploaded_files)} source file(s)").empty()
+
+uploaded_files_str = "".join([f'{file_name}<br/>' for file_name in uploaded_files])
+file_list.markdown(uploaded_files_str, unsafe_allow_html=True)
+
 progress = st.empty()
 
-# ------------------------------- App
-
-source_index = BackEndCore.get_source_index()
-
-uploaded_files = source_index.get_all_files(True)
 if not uploaded_files:
     progress.markdown('Please load at least one file')
     st.stop()
 
-uploaded_files_str = "".join([f'<li>{file_name}<br/>' for file_name in uploaded_files])
-file_list.markdown(uploaded_files_str, unsafe_allow_html=True)
-
+run_button = st.button(label="Run extraction")
 if not run_button:
     st.stop()
 
 progress.markdown('Start converting...')
-extraction_result = BackEndCore().run_text_extraction()
+extraction_result = BackEndCore().run_text_extraction(selected_document_set)
 extraction_result_str = '<br/>'.join(extraction_result)
 progress.markdown(f'Result:<br/>{extraction_result_str}', unsafe_allow_html= True)

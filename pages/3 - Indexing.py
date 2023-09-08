@@ -13,19 +13,28 @@ CREATE_MODE_NEW = "New"
 CREATE_MODE_EXISTED = "Existed"
 # ------------------------------- Core
 
+document_set_manager = BackEndCore.get_document_set_manager()
 text_extractor = BackEndCore.get_text_extractor()
 file_index = BackEndCore.get_file_index()
 llm = BackEndCore.get_llm_manager()
+
 # ------------------------------- UI Setup
 
 st.set_page_config(page_title= PAGE_NAME, layout="wide")
 st.title(PAGE_NAME)
 streamlit_hack_remove_top_space()
 
-text_files = text_extractor.get_all_source_files(True)
+document_set_manager.load()
+selected_document_set = st.selectbox(
+    label="Data set:",
+    options=document_set_manager.get_all_names(),
+    key="selected_document_set_indexing"
+)
 
-file_list = st.expander(label=f'Available {len(text_files)} file(s)').empty()
-text_files_str = "".join([f'<li>{file_name}<br/>' for file_name in text_files])
+text_files = text_extractor.get_all_source_files(selected_document_set, True)
+
+file_list = st.expander(label=f'Available {len(text_files)} chunk(s)').empty()
+text_files_str = "".join([f'{file_name}<br/>' for file_name in text_files])
 file_list.markdown(text_files_str, unsafe_allow_html=True)
 
 embedding_name = st.selectbox(
@@ -61,13 +70,13 @@ if create_mode == CREATE_MODE_EXISTED:
 else:
     new_index_name = st.text_input(label="Enter index name")
 
-run_button = st.button(label="Run indexing")
 progress = st.empty()
 
 if not text_files:
     progress.markdown('There are no files for indexing.')
     st.stop()
 
+run_button = st.button(label="Run indexing")
 if not run_button:
     st.stop()
 
@@ -84,6 +93,13 @@ if create_mode == CREATE_MODE_EXISTED:
     index_name = existed_index_name
 
 progress.markdown(f'Start indexing [{index_name}] ...')
-indexing_result = BackEndCore().run_file_indexing(embedding_name, index_name, chunk_min_chars, chunk_size_tokens, chunk_overlap_tokens)
+indexing_result = BackEndCore().run_file_indexing(
+    selected_document_set,
+    embedding_name,
+    index_name,
+    chunk_min_chars,
+    chunk_size_tokens,
+    chunk_overlap_tokens
+)
 indexing_result_str = '<br/>'.join(indexing_result)
 progress.markdown(f'Result:<br/>{indexing_result_str}', unsafe_allow_html= True)

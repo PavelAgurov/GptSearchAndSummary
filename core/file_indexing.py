@@ -4,8 +4,8 @@
 # pylint: disable=C0301,C0103,C0304,C0303,W0611,W0511,R0913
 
 import os
-import json
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
+from dataclasses_json import dataclass_json
 
 from qdrant_client import QdrantClient
 
@@ -16,11 +16,13 @@ from langchain.docstore.document import Document
 from core.parsers.chunk_splitters.base_splitter import ChunkSplitterParams
 from core.parsers.chunk_splitters.token_splitter import TokenChunkSplitter
 
+@dataclass_json
 @dataclass
 class FileIndexParams:
     """Parameters for indexing"""
     splitter_params : ChunkSplitterParams
 
+@dataclass_json
 @dataclass
 class SearchResult:
     """Result of the search"""
@@ -28,11 +30,13 @@ class SearchResult:
     score     : float
     metadata  : {}
 
+@dataclass_json
 @dataclass
 class FileIndexMeta:
     """Meta info about index"""
     chunkSplitterParams : FileIndexParams
-    embedding_name       : str
+    document_set        : str
+    embedding_name      : str
 
 class FileIndex:
     """File index class"""
@@ -40,13 +44,13 @@ class FileIndex:
     full_index_folder : str
 
     # folder structure:
-    #   .file-index
+    #   .document-index
     #      \<index-name>
     #         \index
     #             <Qdrant db>
     #         index_meta.json
 
-    __DISK_FOLDER = '.file-index'
+    __DISK_FOLDER = '.document-index'
     __INDEX_FOLDER = 'index'
     __CHUNKS_COLLECTION_NAME = 'chunks'
     __INDEX_META_FILE = 'index_meta.json'
@@ -57,7 +61,8 @@ class FileIndex:
             os.makedirs(self.__DISK_FOLDER, exist_ok=True)
 
     def run_indexing(
-            self, 
+            self,
+            document_set : str,
             index_name  : str,
             input_with_meta : list[tuple([str, {}])],
             embedding_name : str,
@@ -80,10 +85,13 @@ class FileIndex:
         # save meta data
         file_index_meta = FileIndexMeta(
             index_params,
+            document_set,
             embedding_name
         )
+
+        meta_json_str = file_index_meta.to_json(indent=4)  # pylint: disable=E1101
         with open(os.path.join(self.__DISK_FOLDER, index_name, self.__INDEX_META_FILE), "wt", encoding="utf-8") as f:
-            json.dump(asdict(file_index_meta), f, indent=4)
+            f.write(meta_json_str)
 
         # create db
         if self.in_memory:
@@ -141,11 +149,7 @@ class FileIndex:
     def get_file_index_meta(self, index_name : str) -> FileIndexMeta:
         """Get meta info about index"""
         with open(os.path.join(self.__DISK_FOLDER, index_name, self.__INDEX_META_FILE), "rt", encoding="utf-8") as f:
-            json_data = json.load(f)
-
-        return FileIndexMeta(
-            FileIndexParams(
-                ChunkSplitterParams(**json_data['chunkSplitterParams']['splitter_params'])
-            ),
-            json_data['embedding_name']
-        )
+            json_data = f.read()
+        file_index_meta = FileIndexMeta.from_json(json_data) # pylint: disable=E1101
+        return file_index_meta
+    

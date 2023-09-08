@@ -1,7 +1,10 @@
-/.data
-/.file-index
-/.plain-text
+/.document-index
+/.document-plain-text
+/.document-set
+/.document-source
+/.pytest_cache
 /.streamlit
+/.vscode
 /__pycache__
 /core/__pycache__
 /utils/__pycache__

@@ -8,10 +8,13 @@ from dataclasses import dataclass
 from core.file_indexing import FileIndex, FileIndexParams
 from core.source_storage import SourceStorage
 from core.llm_manager import LlmManager
+from core.document_set_manager import DocumentSetManager
 from core.text_extractor import TextExtractor, TextExtractorParams
 from core.parsers.chunk_splitters.base_splitter import ChunkSplitterParams
 
 import streamlit as st
+
+IN_MEMORY = False
 
 @dataclass
 class BackendChunk:
@@ -29,6 +32,7 @@ class BackEndCore():
     _SESSION_SOURCE_INDEX = 'source_index'
     _SESSION_LLM = 'llm_instance'
     _SESSION_TEXT_EXTRACTOR = 'plain_text_extractor'
+    _SESSION_DOCUMENT_SET = 'document_set_manager'
 
     def __new__(cls):
         """Singleton"""
@@ -37,17 +41,27 @@ class BackEndCore():
         return cls.instance
 
     @classmethod
+    def get_document_set_manager(cls) -> DocumentSetManager:
+        """Get DocumentSetManager"""
+        if cls._SESSION_DOCUMENT_SET not in st.session_state:
+            document_set_manager= DocumentSetManager(IN_MEMORY)
+            document_set_manager.load()
+            st.session_state[cls._SESSION_DOCUMENT_SET] = document_set_manager
+
+        return st.session_state[cls._SESSION_DOCUMENT_SET]
+
+    @classmethod
     def get_file_index(cls) -> FileIndex:
         """Get FileIndex"""
         if cls._SESSION_FILE_INDEX not in st.session_state:
-            st.session_state[cls._SESSION_FILE_INDEX] = FileIndex(False)
+            st.session_state[cls._SESSION_FILE_INDEX] = FileIndex(IN_MEMORY)
         return st.session_state[cls._SESSION_FILE_INDEX]
 
     @classmethod
-    def get_source_index(cls) -> SourceStorage:
+    def get_source_storage(cls) -> SourceStorage:
         """Get SourceIndex"""
         if cls._SESSION_SOURCE_INDEX not in st.session_state:
-            st.session_state[cls._SESSION_SOURCE_INDEX] = SourceStorage()
+            st.session_state[cls._SESSION_SOURCE_INDEX] = SourceStorage(IN_MEMORY)
         return st.session_state[cls._SESSION_SOURCE_INDEX]
 
     @classmethod
@@ -64,13 +78,14 @@ class BackEndCore():
             st.session_state[cls._SESSION_TEXT_EXTRACTOR] = TextExtractor()
         return st.session_state[cls._SESSION_TEXT_EXTRACTOR]
 
-    def run_text_extraction(self) -> list[str]:
+    def run_text_extraction(self, document_set : str) -> list[str]:
         """Extract plain text from source files"""
-        uploaded_files = self.get_source_index().get_all_files()
+        uploaded_files = self.get_source_storage().get_all_files(document_set)
         textExtractorParams = TextExtractorParams(True)
-        return self.get_text_extractor().text_extraction(uploaded_files, textExtractorParams)
+        return self.get_text_extractor().text_extraction(document_set, uploaded_files, textExtractorParams)
 
-    def run_file_indexing(self, 
+    def run_file_indexing(self,
+                          document_set : str,
                           embedding_name : str, 
                           index_name : str, 
                           chunk_min : int, 
@@ -91,9 +106,10 @@ class BackEndCore():
                 )
         )
 
-        input_with_meta = text_extractor.get_input_with_meta()
+        input_with_meta = text_extractor.get_input_with_meta(document_set)
 
         indexing_result = file_index.run_indexing(
+                document_set,
                 index_name,
                 input_with_meta,
                 embedding_name,

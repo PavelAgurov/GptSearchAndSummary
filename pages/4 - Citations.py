@@ -9,6 +9,8 @@ from backend_core import BackEndCore
 
 PAGE_NAME = "Citations"
 
+# ------------------------------- Core
+
 file_index = BackEndCore.get_file_index()
 
 # ------------------------------- UI Setup
@@ -27,7 +29,8 @@ index_name = st.selectbox(
 if index_name:
     index_info = file_index.get_file_index_meta(index_name)
     splitter_params= index_info.chunkSplitterParams.splitter_params
-    st.info(f'Embedding name: {index_info.embedding_name}. \
+    st.info(f'Document set: {index_info.document_set}.\
+            Embedding name: {index_info.embedding_name}. \
             Chunk min={splitter_params.chunk_min_tokens}, \
             chunk size={splitter_params.tokens_per_chunk},\
             overlap={splitter_params.chunk_overlap_tokens}'
