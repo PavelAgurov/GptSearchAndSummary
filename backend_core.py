@@ -11,6 +11,7 @@ from core.llm_manager import LlmManager
 from core.document_set_manager import DocumentSetManager
 from core.text_extractor import TextExtractor, TextExtractorParams
 from core.parsers.chunk_splitters.base_splitter import ChunkSplitterParams
+from core.kt_manager import KnowledgeTreeItem, KnowledgeTree, KnowledgeTreeManager
 
 import streamlit as st
 
@@ -33,6 +34,7 @@ class BackEndCore():
     _SESSION_LLM = 'llm_instance'
     _SESSION_TEXT_EXTRACTOR = 'plain_text_extractor'
     _SESSION_DOCUMENT_SET = 'document_set_manager'
+    _SESSION_KT_MANAGER = 'knowledge_tree_manager'
 
     def __new__(cls):
         """Singleton"""
@@ -77,6 +79,13 @@ class BackEndCore():
         if cls._SESSION_TEXT_EXTRACTOR not in st.session_state:
             st.session_state[cls._SESSION_TEXT_EXTRACTOR] = TextExtractor()
         return st.session_state[cls._SESSION_TEXT_EXTRACTOR]
+
+    @classmethod
+    def get_knowledge_tree_manager(cls) -> KnowledgeTreeManager:
+        """Get KnowledgeTreeManager"""
+        if cls._SESSION_KT_MANAGER not in st.session_state:
+            st.session_state[cls._SESSION_KT_MANAGER] = KnowledgeTreeManager(IN_MEMORY)
+        return st.session_state[cls._SESSION_KT_MANAGER]
 
     def run_text_extraction(self, document_set : str) -> list[str]:
         """Extract plain text from source files"""
@@ -175,3 +184,31 @@ class BackEndCore():
         llm_manager = self.get_llm_manager()
         answer_result = llm_manager.build_answer(question, [c.content for c in chunk_list])
         return answer_result.answer
+
+    def build_knowledge_tree(self, name : str, document_set : str, max_limit : int, show_progress_callback : any) -> KnowledgeTree:
+        """Build knowledge tree"""
+
+        text_extractor = self.get_text_extractor()
+        llm_manager = self.get_llm_manager()
+        kt_manager = self.get_knowledge_tree_manager()
+
+        input_list = [txt[0] for txt in text_extractor.get_input_with_meta(document_set)]
+        if max_limit > 0:
+            input_list = input_list[:max_limit]
+
+        triples = list[KnowledgeTreeItem]()
+        for index, input_str in enumerate(input_list):
+            show_progress_callback(f'Process {index+1}/{len(input_list)}...')
+            kt_list = llm_manager.build_knowledge_tree(input_str)
+            if not kt_list.error:
+                for kt_item in kt_list.triples:
+                    triples.append(KnowledgeTreeItem(
+                        kt_item.subject,
+                        kt_item.predicate,
+                        kt_item.objects
+                    ))
+        result = KnowledgeTree(triples)
+        show_progress_callback('Save ...')
+        kt_manager.save(name, result)
+        show_progress_callback('')
+        return result

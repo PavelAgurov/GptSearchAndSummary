@@ -20,7 +20,7 @@ streamlit_hack_remove_top_space()
 
 index_name = st.selectbox(
     "Select index:", 
-    key="index_name", 
+    key="index_name_c", 
     options= file_index.get_index_name_list(), 
     index= 0, 
     label_visibility="visible"
@@ -41,12 +41,12 @@ if index_name:
         st.stop()
 
 col11, col12 = st.columns(2)
-sample_count = col11.number_input(label="Count of samples", min_value=1, max_value=100, value=10)
-threshold = col12.number_input(label="Similarity threshold", min_value=0.00, max_value=1.00, value=0.50, step=0.01, format="%.2f")
+sample_count = col11.number_input(label="Count of samples:", min_value=1, max_value=100, value=10)
+threshold = col12.number_input(label="Similarity threshold:", min_value=0.00, max_value=1.00, value=0.50, step=0.01, format="%.2f")
 
 col41, col42, _ = st.columns([20, 20, 80])
 add_llm_score = col41.checkbox(label="Add LLM score", value=True)
-llm_threshold = col42.number_input(label="LLM Threshold", min_value=0.00, max_value=1.00, value=0.50, step=0.01, format="%.2f", disabled=not add_llm_score)
+llm_threshold = col42.number_input(label="LLM Threshold:", min_value=0.00, max_value=1.00, value=0.50, step=0.01, format="%.2f", disabled=not add_llm_score)
 
 build_summary = st.checkbox(label="Build summary", value=True)
 

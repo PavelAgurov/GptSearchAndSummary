@@ -39,29 +39,50 @@ class LlmRelevanceScore:
     used_tokens : int
     error       : str
 
+@dataclass
+class LlmKnowledgeTreeItem:
+    """Item of knowledge tree"""
+    subject     : str
+    predicate   : str
+    objects     : list[str]
+
+@dataclass
+class LlmKnowledgeTree:
+    """LLM knowledge tree"""
+    triples     : list[LlmKnowledgeTreeItem]
+    token_used  : int
+    error       : str
+
 class LlmManager():
     """LLM Manager"""
 
-    llm_relevance : ChatOpenAI
     llm_answer   : ChatOpenAI
+    llm_relevance : ChatOpenAI
     relevance_prompt : PromptTemplate
     relevance_chain : LLMChain
+    llm_kt    : ChatOpenAI
+    kt_prompt : PromptTemplate
+    kt_chain  : LLMChain
 
-    _MODEL_NAME = "gpt-3.5-turbo" # gpt-3.5-turbo-16k
+    _BASE_MODEL_NAME = "gpt-3.5-turbo" # gpt-3.5-turbo-16k
+    _KT_MODEL_NAME = 'gpt-4'
 
     def __init__(self):
         langchain.llm_cache = SQLiteCache()
+        self.llm_answer = None
         self.llm_relevance  = None
         self.relevance_prompt = None
         self.relevance_chain = None
-        self.llm_answer = None
+        self.llm_kt = None
+        self.kt_prompt = None
+        self.kt_chain = None
 
     def __get_api_key(self):
         return os.environ["OPENAI_API_KEY"]
 
     def get_model_name(self):
         """Return model name"""
-        return self._MODEL_NAME
+        return self._BASE_MODEL_NAME
 
     def get_embeddings(self, embedding_name : str):
         """Embeddings"""
@@ -88,7 +109,7 @@ class LlmManager():
         if not self.llm_relevance:
             self.llm_relevance = ChatOpenAI(
                     openai_api_key= self.__get_api_key(),
-                    model_name  = self._MODEL_NAME,
+                    model_name  = self._BASE_MODEL_NAME,
                     temperature = 0,
                     max_tokens  = 1000
             )
@@ -100,16 +121,16 @@ class LlmManager():
                     "query" : query, 
                     "content" : content
                 })
-            try:
-                relevance_json = json.loads(get_fixed_json(relevance_result))
-                return LlmRelevanceScore(
-                            relevance_json['score'], 
-                            relevance_json['explanation'], 
-                            llm_callback.total_tokens, 
-                            None
-                        )
-            except Exception as error: # pylint: disable=W0718
-                return LlmRelevanceScore(0, None, llm_callback.total_tokens, error)
+        try:
+            relevance_json = json.loads(get_fixed_json(relevance_result))
+            return LlmRelevanceScore(
+                        relevance_json['score'], 
+                        relevance_json['explanation'], 
+                        llm_callback.total_tokens, 
+                        None
+                    )
+        except Exception as error: # pylint: disable=W0718
+            return LlmRelevanceScore(0, None, llm_callback.total_tokens, error)
             
     def build_answer(self, question : str, chunk_list : list[str]) -> RefineAnswerResult:
         """Build LLM summary"""
@@ -117,10 +138,44 @@ class LlmManager():
         if not self.llm_answer:
             self.llm_answer = ChatOpenAI(
                     openai_api_key= self.__get_api_key(),
-                    model_name  = self._MODEL_NAME,
+                    model_name  = self._BASE_MODEL_NAME,
                     temperature = 0,
                     max_tokens  = 1000
             )
 
         refine_chain = RefineAnswerChain(self.llm_answer)
         return refine_chain.run(question, chunk_list, False)
+
+    def build_knowledge_tree(self, input_str : str) -> LlmKnowledgeTree:
+        """Build knowledge tree"""
+        if not self.llm_kt:
+            self.llm_kt = ChatOpenAI(
+                    openai_api_key= self.__get_api_key(),
+                    model_name  = self._KT_MODEL_NAME,
+                    temperature = 0,
+                    max_tokens  = 1000
+            )
+            self.kt_prompt = PromptTemplate.from_template(prompts.knowledge_tree_prompt_template)
+            self.kt_chain  = self.kt_prompt | self.llm_kt | StrOutputParser()
+
+        with get_openai_callback() as llm_callback:
+            kt_result = self.kt_chain.invoke({
+                    "text" : input_str
+                })
+        token_used = llm_callback.total_tokens
+
+        try:
+            kt_result_json = json.loads(get_fixed_json(kt_result))["triples"]
+
+            triples = list[LlmKnowledgeTreeItem]()
+            for kt_json in kt_result_json:
+                knowledge_tree_item = LlmKnowledgeTreeItem(
+                    kt_json["Subject"],
+                    kt_json["Predicate"],
+                    [obj["object"] for obj in kt_json["Objects"]]
+                 )
+                triples.append(knowledge_tree_item)
+
+            return LlmKnowledgeTree(triples, token_used, None)
+        except Exception as error: # pylint: disable=W0718
+            return LlmKnowledgeTree(None,  token_used, error)

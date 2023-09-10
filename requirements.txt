@@ -8,4 +8,4 @@ unstructured[all-docs]
 pypdf
 extract_msg
 dataclasses-json
-
+streamlit-agraph
