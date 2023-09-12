@@ -38,7 +38,7 @@ streamlit run main.py
 
 - [x] Upload file(s)
 - [x] Delete file(s)
-- [ ] Document set
+- [x] Document set
 
 ### 2. Backlog: Extract plain text
 
@@ -49,9 +49,9 @@ streamlit run main.py
 - [x] UnstructuredParser from langchain for all other file types
 - [x] error processing
 - [x] to save meta-information
+- [x] split by Document set
 - [ ] to check: to suppot PPT by UnstructuredFileLoader we need to install libreoffice
 - [ ] to check if UnstructuredFileLoader use external API and send information to their API
-- [ ] split by Document set
 - [ ] break words for paragpaphs
 - [ ] table processing
 
@@ -62,8 +62,8 @@ streamlit run main.py
 - [x] support OpenAI or SBERT embeddings
 - [x] min chunk size to ignore "empty" chunks/paragpaphs
 - [x] to save meta-information into db
-- [ ] split by Document set
-- [ ] delete existed index
+- [x] split by Document set
+- [x] delete existed index
 
 ### 4. Backlog: Topics
 
@@ -74,9 +74,9 @@ streamlit run main.py
 
 - [x] similarity search
 - [x] add refs to the source paragpaphs
+- [X] post processing - LLM score
+- [x] select Document set
 - [ ] select topic or custom request
-- [ ] post processing - LLM score
-- [ ] select Document set
 - [ ] how to use metainformation
 
 ### 6. Backlog: Summary and Q&A
