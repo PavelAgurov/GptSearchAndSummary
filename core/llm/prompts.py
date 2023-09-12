@@ -28,8 +28,12 @@ Provide result in JSON:
 """
 
 knowledge_tree_prompt_template = """\
-Extract detailed semantic triples and relations between triples from the provided text (separated by XML tags), including Subject, Predicate and Objects for every triple. 
-Format all the results as indented pretty JSON. Return only JSON.
+You are a networked intelligence helping a human track knowledge triples about all relevant people, things, concepts, etc. 
+and integrating them with your knowledge stored within your weights as well as that stored in a knowledge graph. 
+Extract all of the knowledge triples from the last line of conversation. 
+A knowledge triple is a clause that contains a subject, a predicate, and an object. 
+The subject is the entity being described, the predicate is the property of the subject that is being described, 
+and the object is the value of the property.
 
 Example input:
 The attrition rates related to our IT professionals who have worked for us for at least six months were 13.1%, 10.7% and 9.1% for 2013, 
