@@ -164,15 +164,24 @@ class LlmManager():
                 })
         token_used = llm_callback.total_tokens
 
+        print(kt_result)
+
         try:
             kt_result_json = json.loads(get_fixed_json(kt_result))["triples"]
-
             triples = list[LlmKnowledgeTreeItem]()
             for kt_json in kt_result_json:
+                objects = []
+                if "Objects" in kt_json:
+                    objects = [obj["object"] for obj in kt_json["Objects"]]
+                if "Object" in kt_json:
+                    objects = [kt_json["Object"]]
+                if "object" in kt_json:
+                    objects = [kt_json["object"]]
+
                 knowledge_tree_item = LlmKnowledgeTreeItem(
                     kt_json["Subject"],
                     kt_json["Predicate"],
-                    [obj["object"] for obj in kt_json["Objects"]]
+                    objects
                  )
                 triples.append(knowledge_tree_item)
 

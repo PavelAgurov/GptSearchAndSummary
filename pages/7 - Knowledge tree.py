@@ -24,8 +24,13 @@ if SESSION_KT not in st.session_state:
     st.session_state[SESSION_KT] = None
 # ------------------------------- Consts
 
-MODE_CREATE_NEW = 'Create new'
-MODE_EXISTED = 'Existed'
+MODE_DRAW_EXISTED = 'Draw existed'
+MODE_REBUILD      = 'Re-build'
+MODE_APPEND       = 'Extend existed'
+MODE_CREATE_NEW   = 'Create new'
+
+MODE_BUILD_ALL = 'Build all'
+MODE_BUILD_SELECTED = 'Selected'
 
 # ------------------------------- UI Setup
 PAGE_NAME = "Knowledge tree"
@@ -40,31 +45,53 @@ selected_document_set = st.selectbox(
     key="selected_document_kt"
 )
 
-text_files = text_extractor.get_all_source_files(selected_document_set, True)
+input_text_files = text_extractor.get_all_source_files(selected_document_set, True)
 
-file_list = st.expander(label=f'Available {len(text_files)} chunk(s)').empty()
-text_files_str = "".join([f'{file_name}<br/>' for file_name in text_files])
+file_list = st.expander(label=f'Available {len(input_text_files)} chunk(s)').empty()
+text_files_str = "".join([f'{file_name}<br/>' for file_name in input_text_files])
 file_list.markdown(text_files_str, unsafe_allow_html=True)
 
 st.info('Please note - to build Knowledge Tree GPT-4 will be used.')
 
-create_tree_mode = st.radio(label="Knowledge Tree", options=[MODE_EXISTED, MODE_CREATE_NEW], horizontal=True)
+create_tree_mode = st.radio(label="Knowledge Tree", options=[MODE_DRAW_EXISTED, MODE_REBUILD, MODE_APPEND, MODE_CREATE_NEW], horizontal=True)
 
 create_new_button = None
 new_name = None
+show_existed_button = None
+existed_name = None
+rebuild_button = None
+build_tree_mode = None
+
+if create_tree_mode in [MODE_DRAW_EXISTED, MODE_REBUILD, MODE_APPEND]:
+    existed_name = st.selectbox(label="Existed Knowledge Tree:", options= kt_manager.get_list())
+
 if create_tree_mode == MODE_CREATE_NEW:
-    col_crn_1, col_crn_2 = st.columns(2)
-    new_name  = col_crn_1.text_input(label="Name")
-    max_limit = col_crn_2.number_input(label="Count of files to process (0 - all):", min_value=0, max_value=len(text_files), value=10)
-    col_run_1, col_run_2 = st.columns(2)
+    new_name  = st.text_input(label="New Knowledge Tree:")
+
+if create_tree_mode in [MODE_CREATE_NEW, MODE_REBUILD, MODE_APPEND]:
+    col_b_1, col_b_2 = st.columns([30, 80])
+    build_tree_mode = col_b_1.radio(label="Build mode", options=[MODE_BUILD_ALL, MODE_BUILD_SELECTED], horizontal=True)
+    if build_tree_mode == MODE_BUILD_ALL:
+        max_limit = col_b_2.number_input(label="Count of files to process (0 - all):", min_value=0, max_value=len(input_text_files), value=10)
+    if build_tree_mode == MODE_BUILD_SELECTED:
+        selected_input = col_b_2.text_input(label="File list (separated by ';'):")
+
+col_run_1, col_run_2 = st.columns(2)
+if create_tree_mode == MODE_CREATE_NEW:
     create_new_button = col_run_1.button(label="Create")
     run_status = col_run_2.empty()
 
-show_existed_button = None
-existed_name = None
-if create_tree_mode == MODE_EXISTED:
-    existed_name = st.selectbox(label="Existed Knowledge Tree", options= kt_manager.get_list())
-    show_existed_button = st.button(label="Show")
+if create_tree_mode == MODE_DRAW_EXISTED:
+    show_existed_button = col_run_1.button(label="Show")
+    run_status = col_run_2.empty()
+if create_tree_mode == MODE_REBUILD:
+    rebuild_button = col_run_1.button(label="Rebuild existed")
+    run_status = col_run_2.empty()
+if create_tree_mode == MODE_APPEND:
+    rebuild_button = col_run_1.button(label="Extend existed")
+    run_status = col_run_2.empty()
+
+status_container = st.empty()
 
 def show_progress_callback(progress_str : str):
     """Show progress/status"""
@@ -99,24 +126,58 @@ def build_agraph(knowledge_tree : KnowledgeTree):
                 label= knowledge_item.predicate[:10]
             ))
 
-    st.session_state[SESSION_KT] = [nodes, edges]
+    return [nodes, edges]
 
-if create_new_button and new_name:
-    new_knowledge_tree = BackEndCore().build_knowledge_tree(
-                            new_name,
-                            selected_document_set,
-                            max_limit,
-                            show_progress_callback
-                    )
-    build_agraph(new_knowledge_tree)
-
+build_mode  = None
+append_mode = False
 
 if show_existed_button and existed_name:
     existed_knowledge_tree = kt_manager.load(existed_name)
-    build_agraph(existed_knowledge_tree)
+    st.session_state[SESSION_KT] = build_agraph(existed_knowledge_tree)
+    build_mode = False
 
-saved_tree = st.session_state[SESSION_KT]
-if saved_tree:
+kt_name_to_build = ''
+if rebuild_button:
+    kt_name_to_build = existed_name
+    st.session_state[SESSION_KT] = None
+    append_mode = (create_tree_mode == MODE_APPEND)
+    build_mode = True
+if create_new_button:
+    kt_name_to_build = new_name
+    st.session_state[SESSION_KT] = None
+    build_mode = True
+
+kt_input_files = []
+if build_tree_mode == MODE_BUILD_ALL:
+    if max_limit == 0:
+        kt_input_files = input_text_files
+    else:
+        kt_input_files = input_text_files[:max_limit]
+if build_tree_mode == MODE_BUILD_SELECTED:
+    kt_input_files = [f.strip() for f in selected_input.strip().split(';') if len(f.strip()) > 0]
+
+if build_mode:
+    if not selected_document_set:
+        status_container.markdown('Document set is required')
+        st.stop()
+    if not kt_name_to_build:
+        status_container.markdown('Knowledge Tree name is required')
+        st.stop()
+    if not kt_input_files or len(kt_input_files) == 0:
+        status_container.markdown('Select files for processing')
+        st.stop()
+
+    new_knowledge_tree = BackEndCore().build_knowledge_tree(
+                            selected_document_set,
+                            kt_name_to_build,
+                            kt_input_files,
+                            append_mode,
+                            show_progress_callback
+                    )
+    st.session_state[SESSION_KT] = build_agraph(new_knowledge_tree)
+
+tree_from_session = st.session_state[SESSION_KT]
+if tree_from_session:
     config = Config(
             height=500,
             width=1000, 
@@ -127,4 +188,4 @@ if saved_tree:
             hierarchical=True, 
             physics=False
     )
-    graph = agraph(saved_tree[0], saved_tree[1], config)
+    graph = agraph(tree_from_session[0], tree_from_session[1], config)

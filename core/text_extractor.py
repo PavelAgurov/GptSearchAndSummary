@@ -105,6 +105,21 @@ class TextExtractor:
             return [os.path.basename(file_name) for file_name in file_list if file_name.endswith(self.__PLAIN_TEXT_EXT)]
         return [os.path.join(document_set_folder, file_name) for file_name in file_list if file_name.endswith(self.__PLAIN_TEXT_EXT)]
 
+    def get_source_files(self, document_set : str, input_file_list : list[str], only_names : bool = False) -> list[str]:
+        """Get files from plain text folder"""
+        document_set_folder = self.__get_document_set_folder_for_plain_text(document_set)
+        if not os.path.isdir(document_set_folder):
+            return []
+        file_list = []
+        for input_file in input_file_list:
+            if not input_file.endswith(self.__PLAIN_TEXT_EXT):
+                input_file = f'{input_file}{self.__PLAIN_TEXT_EXT}'
+            if only_names:
+                file_list.append(os.path.basename(input_file))
+            else:
+                file_list.append(os.path.join(document_set_folder, input_file))
+        return file_list
+
     def get_input_with_meta(self, document_set : str) -> list[tuple([str, {}])]:
         """Get all available data with meta"""
         source_files = self.get_all_source_files(document_set, False)
@@ -121,3 +136,19 @@ class TextExtractor:
 
         return result
 
+    def get_input_with_meta_by_files(self,  document_set : str, input_file_list : list[str]) -> list[tuple([str, {}])]:
+        """Get all available data with meta by file names"""
+        source_files = self.get_source_files(document_set, input_file_list, False)
+        print(source_files)
+
+        result = list[tuple([str, {}])]()
+        for source_file in source_files:
+            print(source_file)
+            metadata_file = self.__get_meta_file_name(source_file)
+            with open(metadata_file, encoding="utf-8") as f:
+                metadata = json.loads(f.read())
+            with open(source_file, encoding="utf-8") as f:
+                source = f.read()
+            result.append(tuple([source, metadata]))
+
+        return result

@@ -14,13 +14,14 @@ class KnowledgeTreeItem:
     subject     : str
     predicate   : str
     objects     : list[str]
+    meta_info   : dict[str, str]
 
 @dataclass_json
 @dataclass
 class KnowledgeTree:
     """Knowledge tree"""
     triples     : list[KnowledgeTreeItem]
-    error       : str = None
+    error       : str = ''
 
 class KnowledgeTreeManager:
     """Knowledge Tree Manager class"""

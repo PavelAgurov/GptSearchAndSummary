@@ -4,6 +4,7 @@
 # pylint: disable=C0301,C0103,C0304,C0303,W0611,C0411
 
 from dataclasses import dataclass
+from typing import Callable
 
 from core.file_indexing import FileIndex, FileIndexParams
 from core.source_storage import SourceStorage
@@ -22,7 +23,7 @@ class BackendChunk:
     """Chunk of search result"""
     content   : str
     score     : float
-    metadata  : {}
+    metadata  : dict[str, str]
     llm_score : float
     llm_expl  : str
 
@@ -136,7 +137,7 @@ class BackEndCore():
             score_threshold : float,
             add_llm_score : bool,
             llm_threshold : float,
-            show_status_callback : callable) -> list[BackendChunk]:
+            show_status_callback : Callable[[str], None]) -> list[BackendChunk]:
         """Run similarity search"""
 
         llm_manager = self.get_llm_manager()
@@ -160,7 +161,7 @@ class BackEndCore():
                 similarity_item.score,
                 similarity_item.metadata,
                 0,
-                None
+                ''
             )
             for similarity_item in similarity_result
         ]
@@ -185,28 +186,41 @@ class BackEndCore():
         answer_result = llm_manager.build_answer(question, [c.content for c in chunk_list])
         return answer_result.answer
 
-    def build_knowledge_tree(self, name : str, document_set : str, max_limit : int, show_progress_callback : any) -> KnowledgeTree:
+    def build_knowledge_tree(
+            self,
+            document_set : str,
+            name : str,
+            input_file_list : list[str],
+            append_mode : bool,
+            show_progress_callback : Callable[[str], None]
+        ) -> KnowledgeTree:
         """Build knowledge tree"""
 
         text_extractor = self.get_text_extractor()
         llm_manager = self.get_llm_manager()
         kt_manager = self.get_knowledge_tree_manager()
 
-        input_list = [txt[0] for txt in text_extractor.get_input_with_meta(document_set)]
-        if max_limit > 0:
-            input_list = input_list[:max_limit]
+        existed_triples = []
+        if append_mode:
+            existed_tree = kt_manager.load(name)
+            if not existed_tree.error and existed_tree.triples and len(existed_tree.triples) > 0:
+                existed_triples = existed_tree.triples
 
-        triples = list[KnowledgeTreeItem]()
-        for index, input_str in enumerate(input_list):
-            show_progress_callback(f'Process {index+1}/{len(input_list)}...')
-            kt_list = llm_manager.build_knowledge_tree(input_str)
+        input_list_text_with_meta = text_extractor.get_input_with_meta_by_files(document_set, input_file_list)
+        triples = list[KnowledgeTreeItem](existed_triples)
+        for index, input_item in enumerate(input_list_text_with_meta):
+            show_progress_callback(f'Process {index+1}/{len(input_list_text_with_meta)}...')
+            kt_list = llm_manager.build_knowledge_tree(input_item[0])
             if not kt_list.error:
                 for kt_item in kt_list.triples:
                     triples.append(KnowledgeTreeItem(
                         kt_item.subject,
                         kt_item.predicate,
-                        kt_item.objects
+                        kt_item.objects,
+                        input_item[1]
                     ))
+            else:
+                print(f'ERROR LLM ={kt_list.error}')
         result = KnowledgeTree(triples)
         show_progress_callback('Save ...')
         kt_manager.save(name, result)
