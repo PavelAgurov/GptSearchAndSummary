@@ -45,7 +45,7 @@ sample_count = col11.number_input(label="Count of samples:", min_value=1, max_va
 threshold = col12.number_input(label="Similarity threshold:", min_value=0.00, max_value=1.00, value=0.50, step=0.01, format="%.2f")
 
 col41, col42, _ = st.columns([20, 20, 80])
-add_llm_score = col41.checkbox(label="Add LLM score", value=True)
+add_llm_score = col41.checkbox(label="Add LLM score", value=False)
 llm_threshold = col42.number_input(label="LLM Threshold:", min_value=0.00, max_value=1.00, value=0.50, step=0.01, format="%.2f", disabled=not add_llm_score)
 
 build_summary = st.checkbox(label="Build summary", value=True)
