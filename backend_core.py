@@ -8,7 +8,7 @@ from typing import Callable
 
 from core.file_indexing import FileIndex, FileIndexParams
 from core.source_storage import SourceStorage
-from core.llm_manager import LlmManager
+from core.llm_manager import LlmManager, LlmFormatResult
 from core.document_set_manager import DocumentSetManager
 from core.text_extractor import TextExtractor, TextExtractorParams
 from core.parsers.chunk_splitters.base_splitter import ChunkSplitterParams
@@ -36,6 +36,8 @@ class BackEndCore():
     _SESSION_TEXT_EXTRACTOR = 'plain_text_extractor'
     _SESSION_DOCUMENT_SET = 'document_set_manager'
     _SESSION_KT_MANAGER = 'knowledge_tree_manager'
+
+    __MIN_PLAIN_TEXT_SIZE = 50
 
     def __new__(cls):
         """Singleton"""
@@ -88,11 +90,49 @@ class BackEndCore():
             st.session_state[cls._SESSION_KT_MANAGER] = KnowledgeTreeManager(IN_MEMORY)
         return st.session_state[cls._SESSION_KT_MANAGER]
 
-    def run_text_extraction(self, document_set : str) -> list[str]:
+    def run_text_extraction(
+            self, 
+            document_set : str, 
+            run_llm_formatter : bool, 
+            show_progress_callback : Callable[[str], None]
+        ) -> list[str]:
         """Extract plain text from source files"""
-        uploaded_files = self.get_source_storage().get_all_files(document_set)
-        textExtractorParams = TextExtractorParams(True)
-        return self.get_text_extractor().text_extraction(document_set, uploaded_files, textExtractorParams)
+
+        source_storage = self.get_source_storage()
+        text_extractor = self.get_text_extractor()
+        llm_manager = self.get_llm_manager()
+
+        uploaded_files = source_storage.get_all_files(document_set)
+
+        textExtractorParams = TextExtractorParams(
+            True,
+            show_progress_callback
+        )
+        output_log : list[str] = text_extractor.text_extraction(document_set, uploaded_files, textExtractorParams)
+
+        if not run_llm_formatter:
+            return output_log
+
+        plain_text_files = text_extractor.get_all_source_file_names(document_set, True)
+        
+        for plain_text_file in plain_text_files:
+            output_log.append(f'LLM formatting of {plain_text_file}')
+            show_progress_callback(f'Run LLM formatting of {plain_text_file}...')
+            plain_text = text_extractor.get_input_by_file_name(document_set, plain_text_file)
+
+            if len(plain_text) < self.__MIN_PLAIN_TEXT_SIZE:
+                continue
+
+            print('------------------')
+            print(f'----- {plain_text_file}')
+            formatted_text_result = llm_manager.run_llm_format(plain_text)
+            if formatted_text_result.error:
+                output_log.append(f'ERROR {plain_text_file}: {formatted_text_result.error}')
+                continue
+
+            text_extractor.save_formatted_text(document_set, plain_text_file, formatted_text_result.output_text)
+
+        return output_log
 
     def run_file_indexing(self,
                           document_set : str,

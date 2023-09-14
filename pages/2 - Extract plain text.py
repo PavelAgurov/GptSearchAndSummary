@@ -36,10 +36,17 @@ file_list = st.expander(label=f"Available {len(uploaded_files)} source file(s)")
 uploaded_files_str = "".join([f'{file_name}<br/>' for file_name in uploaded_files])
 file_list.markdown(uploaded_files_str, unsafe_allow_html=True)
 
-text_files = text_extractor.get_all_source_files(selected_document_set, True)
+text_files = text_extractor.get_all_source_file_names(selected_document_set, True)
 st.info(f'There are {len(text_files)} chunks for selected document set. They will be re-created.')
 
+run_llm_formatter = st.checkbox(label="Pre-processing: format documents with LLM")
+
 progress = st.empty()
+
+def show_progress_callback(progress_str : str):
+    """Show progress/status"""
+    progress.markdown(progress_str)
+
 
 if not uploaded_files:
     progress.markdown('Please load at least one file')
@@ -50,6 +57,10 @@ if not run_button:
     st.stop()
 
 progress.markdown('Start converting...')
-extraction_result = BackEndCore().run_text_extraction(selected_document_set)
+extraction_result = BackEndCore().run_text_extraction(
+    selected_document_set,
+    run_llm_formatter,
+    show_progress_callback
+)
 extraction_result_str = '<br/>'.join(extraction_result)
 progress.markdown(f'Result:<br/>{extraction_result_str}', unsafe_allow_html= True)

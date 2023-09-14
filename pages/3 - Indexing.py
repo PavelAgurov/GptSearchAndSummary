@@ -31,7 +31,7 @@ selected_document_set = st.selectbox(
     key="selected_document_set_indexing"
 )
 
-text_files = text_extractor.get_all_source_files(selected_document_set, True)
+text_files = text_extractor.get_all_source_file_names(selected_document_set, True)
 
 file_list = st.expander(label=f'Available {len(text_files)} chunk(s)').empty()
 text_files_str = "".join([f'{file_name}<br/>' for file_name in text_files])
