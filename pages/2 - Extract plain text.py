@@ -13,6 +13,7 @@ PAGE_NAME = "Extract plain text"
 # ------------------------------- Core
 
 source_index = BackEndCore.get_source_storage()
+text_extractor = BackEndCore.get_text_extractor()
 document_set_manager = BackEndCore.get_document_set_manager()
 
 # ------------------------------- UI Setup
@@ -23,7 +24,7 @@ streamlit_hack_remove_top_space()
 
 document_set_manager.load()
 selected_document_set = st.selectbox(
-    label="Data set:",
+    label="Document set:",
     options=document_set_manager.get_all_names(),
     key="selected_document_set_extract"
 )
@@ -34,6 +35,9 @@ file_list = st.expander(label=f"Available {len(uploaded_files)} source file(s)")
 
 uploaded_files_str = "".join([f'{file_name}<br/>' for file_name in uploaded_files])
 file_list.markdown(uploaded_files_str, unsafe_allow_html=True)
+
+text_files = text_extractor.get_all_source_files(selected_document_set, True)
+st.info(f'There are {len(text_files)} chunks for selected document set. They will be re-created.')
 
 progress = st.empty()
 

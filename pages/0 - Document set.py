@@ -21,8 +21,8 @@ streamlit_hack_remove_top_space()
 
 document_set_manager.load()
 
-current_datasets = st.expander(label="Currently available datasets", expanded=True)
-current_datasets.markdown('<br/>'.join(document_set_manager.get_all_names()), unsafe_allow_html=True)
+current_documentsets = st.expander(label="Currently available document sets", expanded=True)
+current_documentsets.markdown('<br/>'.join(document_set_manager.get_all_names()), unsafe_allow_html=True)
 
 with st.form(key="addForm", clear_on_submit=True):
     new_name = st.text_input(label="Document set name:")

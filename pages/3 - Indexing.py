@@ -26,7 +26,7 @@ streamlit_hack_remove_top_space()
 
 document_set_manager.load()
 selected_document_set = st.selectbox(
-    label="Data set:",
+    label="Document set:",
     options=document_set_manager.get_all_names(),
     key="selected_document_set_indexing"
 )
