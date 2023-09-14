@@ -5,7 +5,6 @@
 # pylint: disable=C0301,C0103,C0304,C0303,W0611,W0511,R0913,R0402
 
 import os
-import json
 from enum import Enum
 from dataclasses import dataclass
 
@@ -76,9 +75,14 @@ class LlmManager():
 
     _BASE_MODEL_NAME = "gpt-3.5-turbo" # gpt-3.5-turbo-16k
     _KT_MODEL_NAME = 'gpt-4'
+    _TIKTOKEN_CACHE_DIR = ".tiktoken-cache"
 
     def __init__(self):
         langchain.llm_cache = SQLiteCache()
+
+        # https://github.com/openai/tiktoken/issues/75
+        os.makedirs(self._TIKTOKEN_CACHE_DIR)
+        os.environ["TIKTOKEN_CACHE_DIR"] = self._TIKTOKEN_CACHE_DIR
 
         self.llm_answer = None
         self.relevance_llm  = None

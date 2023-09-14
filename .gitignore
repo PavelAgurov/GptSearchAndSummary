@@ -14,3 +14,4 @@
 /core/llm/__pycache__
 /tests/__pycache__
 /.document-kt
+/.tiktoken-cache

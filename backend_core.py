@@ -140,7 +140,8 @@ class BackEndCore():
                           index_name : str, 
                           chunk_min : int, 
                           chunk_size : int, 
-                          chunk_overlap : int) -> list[str]:
+                          chunk_overlap : int,
+                          use_formatted : bool) -> list[str]:
         """Run file indexing"""
 
         llm_manager = self.get_llm_manager()
@@ -156,8 +157,8 @@ class BackEndCore():
                 )
         )
 
-        input_with_meta = text_extractor.get_input_with_meta(document_set)
-
+        input_with_meta = text_extractor.get_input_with_meta(document_set, use_formatted)
+        
         indexing_result = file_index.run_indexing(
                 document_set,
                 index_name,

@@ -130,7 +130,7 @@ class TextExtractor:
                 file_list.append(os.path.join(document_set_folder, input_file))
         return file_list
 
-    def get_input_with_meta(self, document_set : str) -> list[tuple([str, {}])]:
+    def get_input_with_meta(self, document_set : str, use_formatted : bool) -> list[tuple([str, {}])]:
         """Get all available data with meta"""
         source_files = self.get_all_source_file_names(document_set, False)
 
@@ -140,8 +140,15 @@ class TextExtractor:
             metadata_file = self.__get_meta_file_name(source_file)
             with open(metadata_file, encoding="utf-8") as f:
                 metadata = json.loads(f.read())
-            with open(source_file, encoding="utf-8") as f:
-                source = f.read()
+            
+            formatted_file_name = f'{source_file}{self.__FORMATTER_EXT}'
+            if use_formatted and os.path.isfile(formatted_file_name):
+                with open(formatted_file_name, encoding="utf-8") as f:
+                    source = f.read()
+            else:
+                with open(source_file, encoding="utf-8") as f:
+                    source = f.read()
+
             result.append(tuple([source, metadata]))
 
         return result
@@ -173,6 +180,6 @@ class TextExtractor:
     def save_formatted_text(self, document_set : str, plain_text_file : str, formatted_text : str):
         """Save formatted text"""
         source_file = self.__get_source_file_names(document_set, [plain_text_file], False)[0]
-        bak_file_name = f'{source_file}{self.__FORMATTER_EXT}'
-        with open(bak_file_name, "wt", encoding="utf-8") as f:
+        formatted_file_name = f'{source_file}{self.__FORMATTER_EXT}'
+        with open(formatted_file_name, "wt", encoding="utf-8") as f:
             f.write(formatted_text)

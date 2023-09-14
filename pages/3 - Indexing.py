@@ -44,6 +44,8 @@ embedding_name = st.selectbox(
     index=0
 )
 
+use_formatted = st.checkbox(label="Use formatted text where possible")
+
 col1 , col2, col3 = st.columns(3)
 chunk_min_chars      = col1.number_input(label="Chunk min (tokens)", min_value=1, max_value=10000, value= 50)
 chunk_size_tokens    = col2.number_input(label="Chunk size (tokens)", min_value=100, max_value=10000, value= 1000)
@@ -106,7 +108,8 @@ indexing_result = BackEndCore().run_file_indexing(
     index_name,
     chunk_min_chars,
     chunk_size_tokens,
-    chunk_overlap_tokens
+    chunk_overlap_tokens,
+    use_formatted
 )
 indexing_result_str = '<br/>'.join(indexing_result)
 progress.markdown(f'Result:<br/>{indexing_result_str}', unsafe_allow_html= True)
