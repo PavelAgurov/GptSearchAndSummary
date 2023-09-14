@@ -50,6 +50,7 @@ streamlit run main.py
 - [x] error processing
 - [x] to save meta-information
 - [x] split by Document set
+- [x] LLM pre-processing for plain text
 - [ ] to check: to suppot PPT by UnstructuredFileLoader we need to install libreoffice
 - [ ] to check if UnstructuredFileLoader use external API and send information to their API
 - [ ] break words for paragpaphs
@@ -64,6 +65,7 @@ streamlit run main.py
 - [x] to save meta-information into db
 - [x] split by Document set
 - [x] delete existed index
+- [x] allow to use formatted plain text for indexing
 
 ### 4. Backlog: Topics
 
