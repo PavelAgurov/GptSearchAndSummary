@@ -49,7 +49,7 @@ chunk_min_chars      = col1.number_input(label="Chunk min (tokens)", min_value=1
 chunk_size_tokens    = col2.number_input(label="Chunk size (tokens)", min_value=100, max_value=10000, value= 1000)
 chunk_overlap_tokens = col3.number_input(label="Сhunk overlap (tokens)", min_value=0, max_value=1000, value= 0)
 
-st.info("Database will be created from scratch!")
+st.info("Index will be created from scratch!")
 
 create_mode = st.radio(
     label="Index", 
@@ -61,7 +61,7 @@ create_mode = st.radio(
 
 if create_mode == CREATE_MODE_EXISTED:
     existed_index_name = st.selectbox(
-        "Select existed indexes:", 
+        "Select existed index:", 
         key="existed_index", 
         options= file_index.get_index_name_list(), 
         index= 0, 
