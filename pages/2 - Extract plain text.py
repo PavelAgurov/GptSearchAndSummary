@@ -6,7 +6,7 @@
 import streamlit as st
 
 from utils_streamlit import streamlit_hack_remove_top_space
-from backend_core import BackEndCore
+from backend_core import BackEndCore, BackendTextExtractionParams
 
 PAGE_NAME = "Extract plain text"
 
@@ -37,9 +37,18 @@ uploaded_files_str = "".join([f'{file_name}<br/>' for file_name in uploaded_file
 file_list.markdown(uploaded_files_str, unsafe_allow_html=True)
 
 text_files = text_extractor.get_all_source_file_names(selected_document_set, True)
-st.info(f'There are {len(text_files)} chunks for selected document set. They will be re-created.')
 
+override_all = st.checkbox(label="Override all")
+if override_all:
+    st.info(f'There are {len(text_files)} chunks for selected document set. They will be re-created.')
+else:
+    st.info(f'There are {len(text_files)} chunks for selected document set.')
 run_llm_formatter = st.checkbox(label="Pre-processing: format documents with LLM")
+run_table_extraction = st.checkbox(label="Extract tables")
+if run_table_extraction:
+    st.info('Tables will be extracted from formatted documents if they were created.')
+
+extraction_log = st.expander(label="Log").empty()
 
 progress = st.empty()
 
@@ -59,8 +68,14 @@ if not run_button:
 progress.markdown('Start converting...')
 extraction_result = BackEndCore().run_text_extraction(
     selected_document_set,
-    run_llm_formatter,
-    show_progress_callback
+    BackendTextExtractionParams(
+        override_all,
+        run_llm_formatter,
+        run_table_extraction,
+        show_progress_callback
+    )
 )
+progress.markdown('Done')
+
 extraction_result_str = '<br/>'.join(extraction_result)
-progress.markdown(f'Result:<br/>{extraction_result_str}', unsafe_allow_html= True)
+extraction_log.markdown(extraction_result_str, unsafe_allow_html= True)

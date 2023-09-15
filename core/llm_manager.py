@@ -59,6 +59,13 @@ class LlmFormatResult:
     token_used  : int
     error       : str
 
+@dataclass
+class LlmTableResult:
+    """LLM table result"""
+    output_str  : str
+    token_used  : int
+    error       : str
+
 class LlmManager():
     """LLM Manager"""
 
@@ -81,7 +88,7 @@ class LlmManager():
         langchain.llm_cache = SQLiteCache()
 
         # https://github.com/openai/tiktoken/issues/75
-        os.makedirs(self._TIKTOKEN_CACHE_DIR)
+        os.makedirs(self._TIKTOKEN_CACHE_DIR, exist_ok=True)
         os.environ["TIKTOKEN_CACHE_DIR"] = self._TIKTOKEN_CACHE_DIR
 
         self.llm_answer = None
@@ -224,7 +231,9 @@ class LlmManager():
                     "input_text" : input_text
                 })
 
-        print(f'--->{format_result}')
+        print(f'FORMATTED: {format_result}')
 
         format_result_xml = parse_llm_xml(format_result, ["output_text"])
         return LlmFormatResult(format_result_xml["output_text"], llm_callback.total_tokens, None)
+
+

@@ -29,6 +29,7 @@ class TextExtractor:
     __PLAIN_TEXT_EXT = '.txt'
     __FORMATTER_EXT = '.html'
     __META_EXT = '.json'
+    __TABLES_EXT = '.tables.json'
 
     __parser_map = {
         '.pdf' : PdfParser,
@@ -163,7 +164,6 @@ class TextExtractor:
     def get_input_with_meta_by_files(self,  document_set : str, input_file_list : list[str]) -> list[tuple([str, {}])]:
         """Get all available data with meta by file names"""
         source_files = self.__get_source_file_names(document_set, input_file_list, False)
-        print(source_files)
 
         result = list[tuple([str, {}])]()
         for source_file in source_files:
@@ -177,9 +177,41 @@ class TextExtractor:
 
         return result
 
-    def save_formatted_text(self, document_set : str, plain_text_file : str, formatted_text : str):
-        """Save formatted text"""
+    def __get_formatted_file_name(self, document_set : str, plain_text_file : str) -> str:
         source_file = self.__get_source_file_names(document_set, [plain_text_file], False)[0]
         formatted_file_name = f'{source_file}{self.__FORMATTER_EXT}'
+        return formatted_file_name
+
+    def save_formatted_text(self, document_set : str, plain_text_file : str, formatted_text : str):
+        """Save formatted text"""
+        formatted_file_name = self.__get_formatted_file_name(document_set, plain_text_file)
         with open(formatted_file_name, "wt", encoding="utf-8") as f:
             f.write(formatted_text)
+
+    def get_formatted_text(self, document_set : str, plain_text_file : str) -> str:
+        """Get formatted text"""
+        formatted_file_name = self.__get_formatted_file_name(document_set, plain_text_file)
+        if not os.path.isfile(formatted_file_name):
+            return ''
+        with open(formatted_file_name, "rt", encoding="utf-8") as f:
+            formatted_text = f.read()
+        return formatted_text
+
+    def __get_table_file_name(self, document_set : str, plain_text_file : str) -> str:
+        """Build name of table file"""
+        source_file = self.__get_source_file_names(document_set, [plain_text_file], False)[0]
+        tables_file_name = f'{source_file}{self.__TABLES_EXT}'
+        return tables_file_name
+
+    def save_tables(self, document_set : str, plain_text_file : str, tables_text : str):
+        """Save tables text"""
+        tables_file_name = self.__get_table_file_name(document_set, plain_text_file)
+        with open(tables_file_name, "wt", encoding="utf-8") as f:
+            f.write(tables_text)
+
+    def delete_table(self, document_set : str, plain_text_file : str):
+        """Delete table"""
+        tables_file_name = self.__get_table_file_name(document_set, plain_text_file)
+        if os.path.isfile(tables_file_name):
+            os.remove(tables_file_name)
+

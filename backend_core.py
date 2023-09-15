@@ -8,15 +8,33 @@ from typing import Callable
 
 from core.file_indexing import FileIndex, FileIndexParams
 from core.source_storage import SourceStorage
-from core.llm_manager import LlmManager, LlmFormatResult
+from core.llm_manager import LlmManager
 from core.document_set_manager import DocumentSetManager
 from core.text_extractor import TextExtractor, TextExtractorParams
 from core.parsers.chunk_splitters.base_splitter import ChunkSplitterParams
 from core.kt_manager import KnowledgeTreeItem, KnowledgeTree, KnowledgeTreeManager
+from core.table_extractor import TableExtractor
 
 import streamlit as st
 
 IN_MEMORY = False
+
+@dataclass
+class BackendTextExtractionParams:
+    """Parameters of text extraction"""
+    override_all         : bool
+    run_llm_formatter    : bool
+    run_table_extraction : bool
+    show_progress_callback : Callable[[str], None]
+
+@dataclass
+class BackendFileIndexingParams:
+    """Parameters for file indexing"""
+    embedding_name : str
+    chunk_min      : int 
+    chunk_size     : int
+    chunk_overlap  : int
+    use_formatted  : bool
 
 @dataclass
 class BackendChunk:
@@ -36,6 +54,7 @@ class BackEndCore():
     _SESSION_TEXT_EXTRACTOR = 'plain_text_extractor'
     _SESSION_DOCUMENT_SET = 'document_set_manager'
     _SESSION_KT_MANAGER = 'knowledge_tree_manager'
+    _SESSION_TABLE_EXTRACTOR = 'table_extractor'
 
     __MIN_PLAIN_TEXT_SIZE = 50
 
@@ -90,58 +109,109 @@ class BackEndCore():
             st.session_state[cls._SESSION_KT_MANAGER] = KnowledgeTreeManager(IN_MEMORY)
         return st.session_state[cls._SESSION_KT_MANAGER]
 
-    def run_text_extraction(
-            self, 
-            document_set : str, 
-            run_llm_formatter : bool, 
-            show_progress_callback : Callable[[str], None]
-        ) -> list[str]:
+    @classmethod
+    def get_table_extractor(cls) -> TableExtractor:
+        """Get TableExtractor"""
+        if cls._SESSION_TABLE_EXTRACTOR not in st.session_state:
+            st.session_state[cls._SESSION_TABLE_EXTRACTOR] = TableExtractor()
+        return st.session_state[cls._SESSION_TABLE_EXTRACTOR]
+
+    def run_text_extraction(self, document_set : str, params : BackendTextExtractionParams) -> list[str]:
         """Extract plain text from source files"""
 
-        source_storage = self.get_source_storage()
-        text_extractor = self.get_text_extractor()
-        llm_manager = self.get_llm_manager()
+        source_storage  = self.get_source_storage()
+        text_extractor  = self.get_text_extractor()
+        llm_manager     = self.get_llm_manager()
+        table_extractor = self.get_table_extractor()
 
         uploaded_files = source_storage.get_all_files(document_set)
 
         textExtractorParams = TextExtractorParams(
-            True,
-            show_progress_callback
+            params.override_all,
+            params.show_progress_callback
         )
         output_log : list[str] = text_extractor.text_extraction(document_set, uploaded_files, textExtractorParams)
 
-        if not run_llm_formatter:
-            return output_log
+        if params.run_llm_formatter or params.run_table_extraction:
+            plain_text_files = text_extractor.get_all_source_file_names(document_set, True)
+            for plain_text_file_name in plain_text_files:
+                plain_text = text_extractor.get_input_by_file_name(document_set, plain_text_file_name)
+                if len(plain_text) < self.__MIN_PLAIN_TEXT_SIZE:
+                    continue
 
-        plain_text_files = text_extractor.get_all_source_file_names(document_set, True)
+                if params.run_llm_formatter:
+                    self.__exec_llm_formatter(
+                        document_set, 
+                        plain_text_file_name, 
+                        plain_text,
+                        text_extractor, 
+                        llm_manager, 
+                        params.show_progress_callback,
+                        output_log
+                    )
         
-        for plain_text_file in plain_text_files:
-            output_log.append(f'LLM formatting of {plain_text_file}')
-            show_progress_callback(f'Run LLM formatting of {plain_text_file}...')
-            plain_text = text_extractor.get_input_by_file_name(document_set, plain_text_file)
-
-            if len(plain_text) < self.__MIN_PLAIN_TEXT_SIZE:
-                continue
-
-            print('------------------')
-            print(f'----- {plain_text_file}')
-            formatted_text_result = llm_manager.run_llm_format(plain_text)
-            if formatted_text_result.error:
-                output_log.append(f'ERROR {plain_text_file}: {formatted_text_result.error}')
-                continue
-
-            text_extractor.save_formatted_text(document_set, plain_text_file, formatted_text_result.output_text)
+                if params.run_table_extraction:
+                    self.__exec_extract_tables(
+                        document_set,
+                        plain_text_file_name,
+                        text_extractor,
+                        table_extractor,
+                        params.show_progress_callback,
+                        output_log
+                    )
 
         return output_log
 
-    def run_file_indexing(self,
-                          document_set : str,
-                          embedding_name : str, 
-                          index_name : str, 
-                          chunk_min : int, 
-                          chunk_size : int, 
-                          chunk_overlap : int,
-                          use_formatted : bool) -> list[str]:
+    def __exec_llm_formatter(
+            self, 
+            document_set, 
+            plain_text_file_name, 
+            plain_text,
+            text_extractor, 
+            llm_manager, 
+            show_progress_callback : Callable[[str], None],
+            output_log : list[str]
+        ):
+        """Execute LLM formatter"""
+        output_log.append(f'LLM formatting of {plain_text_file_name}')
+        show_progress_callback(f'Run LLM formatting of {plain_text_file_name}...')
+        formatted_text_result = llm_manager.run_llm_format(plain_text)
+        if formatted_text_result.error:
+            output_log.append(f'ERROR {plain_text_file_name}: {formatted_text_result.error}')
+        else:
+            output_log.append('Saved formatted text')
+            text_extractor.save_formatted_text(document_set, plain_text_file_name, formatted_text_result.output_text)
+
+    def __exec_extract_tables(
+            self,
+            document_set : str,
+            plain_text_file_name : str,
+            text_extractor : TextExtractor, 
+            table_extractor : TableExtractor, 
+            show_progress_callback : Callable[[str], None],
+            output_log : list[str] 
+        ):
+        """Extract tables from formatted document"""
+        text_extractor.delete_table(document_set, plain_text_file_name)
+        output_log.append(f'Table extaction from {plain_text_file_name}')
+        show_progress_callback(f'Table extaction from {plain_text_file_name}...')
+        formatted_text = text_extractor.get_formatted_text(document_set, plain_text_file_name)
+        if len(formatted_text) < self.__MIN_PLAIN_TEXT_SIZE:
+            return
+        table_list_result = table_extractor.get_table_from_html(formatted_text)
+        if not table_list_result:
+            return
+        if table_list_result.error:
+            output_log.append(f'ERROR {plain_text_file_name}: {table_list_result.error}')
+            return
+        if not table_list_result.table_list or len(table_list_result.table_list) == 0:
+            return
+        table_extractor_result_json = table_extractor.get_table_extractor_result_json(table_list_result)
+        print(f'{plain_text_file_name}=>{table_extractor_result_json}')
+        output_log.append('Saved extracted table(s)')
+        text_extractor.save_tables(document_set, plain_text_file_name, table_extractor_result_json)
+
+    def run_file_indexing(self, document_set : str, params : BackendFileIndexingParams) -> list[str]:
         """Run file indexing"""
 
         llm_manager = self.get_llm_manager()
@@ -150,21 +220,21 @@ class BackEndCore():
 
         fileIndexParams = FileIndexParams(
                 splitter_params= ChunkSplitterParams(
-                    chunk_min, 
-                    chunk_size, 
-                    chunk_overlap,
+                    params.chunk_min,
+                    params.chunk_size,
+                    params.chunk_overlap,
                     llm_manager.get_model_name()
                 )
         )
 
-        input_with_meta = text_extractor.get_input_with_meta(document_set, use_formatted)
-        
+        input_with_meta = text_extractor.get_input_with_meta(document_set, params.use_formatted)
+
         indexing_result = file_index.run_indexing(
                 document_set,
-                index_name,
+                params.index_name,
                 input_with_meta,
-                embedding_name,
-                llm_manager.get_embeddings(embedding_name),
+                params.embedding_name,
+                llm_manager.get_embeddings(params.embedding_name),
                 fileIndexParams
         )
 

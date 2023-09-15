@@ -6,7 +6,7 @@
 import streamlit as st
 
 from utils_streamlit import streamlit_hack_remove_top_space
-from backend_core import BackEndCore
+from backend_core import BackEndCore, BackendFileIndexingParams
 
 PAGE_NAME = "Indexing"
 CREATE_MODE_NEW = "New"
@@ -104,12 +104,14 @@ if create_mode == CREATE_MODE_EXISTED:
 progress.markdown(f'Start indexing [{index_name}] ...')
 indexing_result = BackEndCore().run_file_indexing(
     selected_document_set,
-    embedding_name,
-    index_name,
-    chunk_min_chars,
-    chunk_size_tokens,
-    chunk_overlap_tokens,
-    use_formatted
+    BackendFileIndexingParams(
+        embedding_name,
+        index_name,
+        chunk_min_chars,
+        chunk_size_tokens,
+        chunk_overlap_tokens,
+        use_formatted
+    )
 )
 indexing_result_str = '<br/>'.join(indexing_result)
 progress.markdown(f'Result:<br/>{indexing_result_str}', unsafe_allow_html= True)

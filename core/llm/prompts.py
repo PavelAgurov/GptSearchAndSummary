@@ -70,15 +70,19 @@ Example output:
 format_prompt_template = """\
 You are the best parsing linguist. 
 I will give you text (separated by XML tags). 
-Your task is to find all paragraphs,  tables, headers and sub-topics in provided text  and mark them by HTML tags <h1>,<h2>, <p>, <table> etc. 
+Your task is to find all paragraphs,  tables, headers and sub-topics in provided text and mark them by HTML tags <h1>,<h2>,<p>,<table> etc. 
 Remove uninformative short paragraphs. 
+Mark paragraphs with programming code, json, xml etc. by <code> tag.
+For each table you should add attribute 'title' into table header.
+Do not create nested tables.
 Return this text with this new tags, tables and good formatted paragraphs into XML tag 'output_text'.
-
-<input_text>
-{input_text}
-</input_text>
 
 <output_text>
     Output text here
 </output_text>
+
+<input_text>
+{input_text}
+</input_text>
 """
+
