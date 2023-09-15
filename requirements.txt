@@ -9,3 +9,4 @@ pypdf
 extract_msg
 dataclasses-json
 streamlit-agraph
+html5lib
