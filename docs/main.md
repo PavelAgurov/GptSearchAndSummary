@@ -2,13 +2,32 @@
 
 ## Main
 
+### 0. Document set
+
+This page allows to create document set. All other operations will be in scope of document set.
+
+Document sets are stored in file `.document-set\document-set.json`
+
 ### 1. Upload files
 
-TBD
+Here you can upload documents into document set (or delete documents from document set).
+
+Files are uploaded into `.document-source\<document-set>` folder.
 
 ### 2. Extract plain text
 
-TBD
+All search operation works only with plain text, so this page allow to extract plain text from
+different data sources.
+
+With help of LLM you can fix formatting.
+
+From formatted documents you can extract tables.
+
+- Plain text files are stored in `.document-plain-text\<document-set>` folder.
+- Each page has extension -nn.txt, where nn is a page number
+- Meta-information about page is stored in .txt.json file (per page)
+- Formatted page is stored in .txt.html file (per page)
+- Extracted tables are stored in .txt.tables.json file (per page)
 
 ### 3. Indexing
 
@@ -26,6 +45,14 @@ TBD
 
 TBD
 
+### 7. Knowledge tree
+
+TBD
+
+### 8. Tables
+
+TBD
+
 ## How to run
 
 ```python
@@ -33,6 +60,10 @@ streamlit run main.py
 ```
 
 ## Backlog
+
+### 0. Backlog: Document set
+
+- [ ] Delete document set
 
 ### 1. Backlog: Upload files
 
@@ -51,10 +82,10 @@ streamlit run main.py
 - [x] to save meta-information
 - [x] split by Document set
 - [x] LLM pre-processing for plain text
+- [x] table processing
 - [ ] to check: to suppot PPT by UnstructuredFileLoader we need to install libreoffice
 - [ ] to check if UnstructuredFileLoader use external API and send information to their API
 - [ ] break words for paragpaphs
-- [ ] table processing
 
 ### 3. Backlog: Indexing
 
@@ -105,5 +136,6 @@ streamlit run main.py
 ### 9. Backlog: extended
 
 - [ ] load KB data
+- [ ] role and permissions
 
 

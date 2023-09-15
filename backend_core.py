@@ -31,6 +31,7 @@ class BackendTextExtractionParams:
 class BackendFileIndexingParams:
     """Parameters for file indexing"""
     embedding_name : str
+    index_name     : str
     chunk_min      : int 
     chunk_size     : int
     chunk_overlap  : int
