@@ -13,7 +13,7 @@ from core.document_set_manager import DocumentSetManager
 from core.text_extractor import TextExtractor, TextExtractorParams
 from core.parsers.chunk_splitters.base_splitter import ChunkSplitterParams
 from core.kt_manager import KnowledgeTreeItem, KnowledgeTree, KnowledgeTreeManager
-from core.table_extractor import TableExtractor
+from core.table_extractor import TableExtractor, TableExtractorResult
 
 import streamlit as st
 
@@ -208,7 +208,6 @@ class BackEndCore():
         if not table_list_result.table_list or len(table_list_result.table_list) == 0:
             return
         table_extractor_result_json = table_extractor.get_table_extractor_result_json(table_list_result)
-        print(f'{plain_text_file_name}=>{table_extractor_result_json}')
         output_log.append('Saved extracted table(s)')
         text_extractor.save_tables(document_set, plain_text_file_name, table_extractor_result_json)
 
@@ -338,3 +337,13 @@ class BackEndCore():
         kt_manager.save(name, result)
         show_progress_callback('')
         return result
+
+    def get_tables_from_file(self, document_set : str, file_name : str) -> TableExtractorResult:
+        """Load tables from file"""
+        text_extractor = self.get_text_extractor()
+        table_extractor = self.get_table_extractor()
+
+        table_json = text_extractor.load_table_json(document_set, file_name)
+        if not table_json or len(table_json) == 0:
+            return None
+        return table_extractor.get_table_extractor_result_from_json(table_json)

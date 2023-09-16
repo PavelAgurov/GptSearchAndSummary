@@ -12,6 +12,8 @@ from backend_core import BackEndCore
 # ------------------------------- Core
 
 document_set_manager = BackEndCore.get_document_set_manager()
+text_extractor = BackEndCore.get_text_extractor()
+table_extractor = BackEndCore.get_table_extractor()
 
 # ------------------------------- UI Setup
 PAGE_NAME = "Tables"
@@ -26,3 +28,23 @@ selected_document_set = st.selectbox(
     key="selected_document_kt"
 )
 
+if not selected_document_set:
+    st.stop()
+
+table_files = text_extractor.get_table_file_list(selected_document_set, True)
+selected_table_file = st.selectbox(label="Table(s) file:", options=table_files)
+
+if not selected_table_file:
+    st.stop()
+
+table_extractor_result = BackEndCore().get_tables_from_file(selected_document_set, selected_table_file)
+if table_extractor_result.error:
+    st.error(table_extractor_result.error)
+    st.stop()
+
+table_names = [t.table_name for t in table_extractor_result.table_list]
+selected_table_name = st.selectbox(label="Table(s):", options=table_names)
+
+selected_table_data = [t.table_data for t in table_extractor_result.table_list if t.table_name == selected_table_name][0]
+
+st.dataframe(selected_table_data, use_container_width=True, hide_index=True)

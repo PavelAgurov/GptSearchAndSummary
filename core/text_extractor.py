@@ -215,3 +215,29 @@ class TextExtractor:
         if os.path.isfile(tables_file_name):
             os.remove(tables_file_name)
 
+    def get_table_file_list(self, document_set : str, only_names : bool) -> list[str]:
+        """List of files with tables"""
+        document_set_folder = self.__get_document_set_folder_for_plain_text(document_set)
+        if not os.path.isdir(document_set_folder):
+            return []
+        file_list = os.listdir(document_set_folder)
+        if only_names:
+            return [os.path.basename(file_name) for file_name in file_list if file_name.endswith(self.__TABLES_EXT)]
+        return [os.path.join(document_set_folder, file_name) for file_name in file_list if file_name.endswith(self.__TABLES_EXT)]
+
+    def load_table_json(self, document_set : str, file_name : str) -> str:
+        """Return table json"""
+        document_set_folder = self.__get_document_set_folder_for_plain_text(document_set)
+        if not os.path.isdir(document_set_folder):
+            return ''
+        if not file_name.endswith(self.__TABLES_EXT):
+            file_name = f'{file_name}{self.__TABLES_EXT}'
+        file_name = os.path.join(document_set_folder, file_name)
+        print(file_name)
+        if not os.path.isfile(file_name):
+            return ''
+        with open(file_name, "rt", encoding="utf-8") as f:
+            json_text = f.read()
+        return json_text
+        
+

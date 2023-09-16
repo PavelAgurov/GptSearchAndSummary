@@ -7,6 +7,7 @@ import re
 from dataclasses import field, dataclass
 import pandas as pd
 from dataclasses_json import config, dataclass_json
+from io import StringIO
 
 @dataclass_json
 @dataclass
@@ -42,9 +43,11 @@ class TableExtractor:
                 table_name = str(match[0]).strip('"').strip()
 
             table_data_str = f'<table>{match[1]}</table>'
-            table_data_list = pd.read_html(table_data_str)
+            table_data_str = table_data_str.replace('<th>', '<td>')
+            table_data_list = pd.read_html(StringIO(table_data_str))
 
             for table_data in table_data_list:
+                print(table_data)
                 tables.append(TableExtractorItem(table_name, table_data))
 
         return TableExtractorResult(tables, None)
@@ -52,3 +55,7 @@ class TableExtractor:
     def get_table_extractor_result_json(self, result : TableExtractorResult) -> str:
         """Convert TableExtractorResult into json"""
         return result.to_json(indent=4) # pylint: disable=E1101
+    
+    def get_table_extractor_result_from_json(self, json_str : str) -> TableExtractorResult:
+        """Load TableExtractorResult from json"""
+        return TableExtractorResult.from_json(json_str) # pylint: disable=E1101
