@@ -47,7 +47,6 @@ class TableExtractor:
             table_data_list = pd.read_html(StringIO(table_data_str))
 
             for table_data in table_data_list:
-                print(table_data)
                 tables.append(TableExtractorItem(table_name, table_data))
 
         return TableExtractorResult(tables, None)
