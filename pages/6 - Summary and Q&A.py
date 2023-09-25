@@ -4,7 +4,7 @@
 # pylint: disable=C0301,C0103,C0303,W0611
 
 import streamlit as st
-from utils_streamlit import streamlit_hack_remove_top_space
+from utils_streamlit import streamlit_hack_remove_top_space, hide_footer
 
 from backend_core import BackEndCore
 from ui.dialog_storage import DialogStorage, DialogRole
@@ -26,6 +26,7 @@ PAGE_NAME = "Summary and Q&A"
 st.set_page_config(page_title= PAGE_NAME, layout="wide")
 st.title(PAGE_NAME)
 streamlit_hack_remove_top_space()
+hide_footer()
 
 document_set_manager.load()
 selected_document_set = st.selectbox(

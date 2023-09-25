@@ -5,7 +5,7 @@
 
 import streamlit as st
 
-from utils_streamlit import streamlit_hack_remove_top_space
+from utils_streamlit import streamlit_hack_remove_top_space, hide_footer
 from backend_core import BackEndCore
 
 # ------------------------------- Core
@@ -17,6 +17,7 @@ PAGE_NAME = "Document set"
 st.set_page_config(page_title= PAGE_NAME, layout="wide")
 st.title(PAGE_NAME)
 streamlit_hack_remove_top_space()
+hide_footer()
 
 document_set_manager.load()
 
