@@ -8,8 +8,6 @@ import streamlit as st
 from utils_streamlit import streamlit_hack_remove_top_space
 from backend_core import BackEndCore, BackendTextExtractionParams
 
-PAGE_NAME = "Extract plain text"
-
 # ------------------------------- Core
 
 source_index = BackEndCore.get_source_storage()
@@ -17,7 +15,7 @@ text_extractor = BackEndCore.get_text_extractor()
 document_set_manager = BackEndCore.get_document_set_manager()
 
 # ------------------------------- UI Setup
-
+PAGE_NAME = "Extract plain text"
 st.set_page_config(page_title= PAGE_NAME, layout="wide")
 st.title(PAGE_NAME)
 streamlit_hack_remove_top_space()

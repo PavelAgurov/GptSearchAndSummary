@@ -8,7 +8,6 @@ import streamlit as st
 from utils_streamlit import streamlit_hack_remove_top_space
 from backend_core import BackEndCore, BackendFileIndexingParams
 
-PAGE_NAME = "Indexing"
 CREATE_MODE_NEW = "New"
 CREATE_MODE_EXISTED = "Existed"
 # ------------------------------- Core
@@ -19,7 +18,7 @@ file_index = BackEndCore.get_file_index()
 llm = BackEndCore.get_llm_manager()
 
 # ------------------------------- UI Setup
-
+PAGE_NAME = "Indexing"
 st.set_page_config(page_title= PAGE_NAME, layout="wide")
 st.title(PAGE_NAME)
 streamlit_hack_remove_top_space()
@@ -65,19 +64,24 @@ if create_mode == CREATE_MODE_EXISTED:
     existed_index_name = st.selectbox(
         "Select existed index:", 
         key="existed_index", 
-        options= file_index.get_index_name_list(), 
+        options= file_index.get_index_name_list(selected_document_set), 
         index= 0, 
         label_visibility="visible"
     )
 else:
     new_index_name = st.text_input(label="Enter index name:")
 
-col1e, col2e = st.columns([10,50])
+col1e, col2e, col3e = st.columns([10,10,40])
 run_button = col1e.button(label="Run indexing")
 if create_mode == CREATE_MODE_EXISTED and existed_index_name:
     delete_button = col2e.button(label="Delete index")
     if delete_button:
-        file_index.delete_index(existed_index_name)
+        file_index.delete_index(selected_document_set, existed_index_name)
+        st.experimental_rerun()
+
+    set_as_default_button = col3e.button(label="Set as default index")
+    if set_as_default_button:
+        document_set_manager.set_default_index(selected_document_set, existed_index_name)
         st.experimental_rerun()
 
 progress = st.empty()

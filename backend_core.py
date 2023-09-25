@@ -14,6 +14,7 @@ from core.text_extractor import TextExtractor, TextExtractorParams
 from core.parsers.chunk_splitters.base_splitter import ChunkSplitterParams
 from core.kt_manager import KnowledgeTreeItem, KnowledgeTree, KnowledgeTreeManager
 from core.table_extractor import TableExtractor, TableExtractorResult
+from core.topic_manager import TopicManager
 
 import streamlit as st
 
@@ -56,6 +57,7 @@ class BackEndCore():
     _SESSION_DOCUMENT_SET = 'document_set_manager'
     _SESSION_KT_MANAGER = 'knowledge_tree_manager'
     _SESSION_TABLE_EXTRACTOR = 'table_extractor'
+    _SESSION_TOPIC_MANAGER = 'topic_manager'
 
     __MIN_PLAIN_TEXT_SIZE = 50
 
@@ -116,6 +118,13 @@ class BackEndCore():
         if cls._SESSION_TABLE_EXTRACTOR not in st.session_state:
             st.session_state[cls._SESSION_TABLE_EXTRACTOR] = TableExtractor()
         return st.session_state[cls._SESSION_TABLE_EXTRACTOR]
+
+    @classmethod
+    def get_topic_manager(cls) -> TopicManager:
+        """Get TopicManager"""
+        if cls._SESSION_TOPIC_MANAGER not in st.session_state:
+            st.session_state[cls._SESSION_TOPIC_MANAGER] = TopicManager()
+        return st.session_state[cls._SESSION_TOPIC_MANAGER]
 
     def run_text_extraction(self, document_set : str, params : BackendTextExtractionParams) -> list[str]:
         """Extract plain text from source files"""
@@ -242,6 +251,7 @@ class BackEndCore():
 
     def similarity_search(
             self, 
+            document_set : str,
             index_name : str, 
             query: str, 
             sample_count : int, 
@@ -255,10 +265,11 @@ class BackEndCore():
         file_index = self.get_file_index()
 
         show_status_callback('Load index...')
-        fileIndexMeta = file_index.get_file_index_meta(index_name)
+        fileIndexMeta = file_index.get_file_index_meta(document_set, index_name)
 
         show_status_callback('Similarity search...')
         similarity_result = file_index.similarity_search(
+            document_set,
             index_name,
             query, 
             llm_manager.get_embeddings(fileIndexMeta.embedding_name), 

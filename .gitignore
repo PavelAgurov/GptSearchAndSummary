@@ -16,3 +16,4 @@
 /.document-kt
 /.tiktoken-cache
 /.document-png
+/ui/__pycache__

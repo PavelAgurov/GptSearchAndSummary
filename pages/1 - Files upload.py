@@ -8,7 +8,7 @@ import streamlit as st
 from utils_streamlit import streamlit_hack_remove_top_space
 from backend_core import BackEndCore
 
-PAGE_NAME = "Files Upload"
+# ------------------------------- Session
 
 SESSION_UPLOADED_STATUS = 'files_uploaded_status'
 if SESSION_UPLOADED_STATUS not in st.session_state:
@@ -20,6 +20,7 @@ document_set_manager = BackEndCore.get_document_set_manager()
 source_index = BackEndCore.get_source_storage()
 
 # ------------------------------- UI Setup
+PAGE_NAME = "Files Upload"
 st.set_page_config(page_title= PAGE_NAME, layout="wide")
 st.title(PAGE_NAME)
 streamlit_hack_remove_top_space()

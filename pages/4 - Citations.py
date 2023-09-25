@@ -7,27 +7,34 @@ import streamlit as st
 from utils_streamlit import streamlit_hack_remove_top_space
 from backend_core import BackEndCore
 
-PAGE_NAME = "Citations"
-
 # ------------------------------- Core
 
+document_set_manager = BackEndCore.get_document_set_manager()
 file_index = BackEndCore.get_file_index()
 
 # ------------------------------- UI Setup
+PAGE_NAME = "Citations"
 st.set_page_config(page_title= PAGE_NAME, layout="wide")
 st.title(PAGE_NAME)
 streamlit_hack_remove_top_space()
 
+document_set_manager.load()
+selected_document_set = st.selectbox(
+    label="Document set:",
+    options=document_set_manager.get_all_names(),
+    key="selected_document_set_indexing"
+)
+
 index_name = st.selectbox(
     "Select index:", 
     key="index_name_c", 
-    options= file_index.get_index_name_list(), 
+    options= file_index.get_index_name_list(selected_document_set), 
     index= 0, 
     label_visibility="visible"
 )
 
 if index_name:
-    index_info = file_index.get_file_index_meta(index_name)
+    index_info = file_index.get_file_index_meta(selected_document_set, index_name)
     if not index_info.error:
         splitter_params= index_info.chunkSplitterParams.splitter_params
         st.info(f'Document set: {index_info.document_set}.\
@@ -74,6 +81,7 @@ if score_threshold == 0:
     score_threshold = None
 
 chunk_list = BackEndCore().similarity_search(
+                        selected_document_set,
                         index_name,
                         query, 
                         sample_count, 

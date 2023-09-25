@@ -83,7 +83,7 @@ class FileIndex:
 
         # create index folder
         if not self.in_memory:
-            os.makedirs(os.path.join(self.__DISK_FOLDER, index_name), exist_ok=True)
+            os.makedirs(os.path.join(self.__DISK_FOLDER, document_set, index_name), exist_ok=True)
 
         # save meta data
         file_index_meta = FileIndexMeta(
@@ -93,7 +93,7 @@ class FileIndex:
         )
 
         meta_json_str = file_index_meta.to_json(indent=4)  # pylint: disable=E1101
-        with open(os.path.join(self.__DISK_FOLDER, index_name, self.__INDEX_META_FILE), "wt", encoding="utf-8") as f:
+        with open(os.path.join(self.__DISK_FOLDER, document_set, index_name, self.__INDEX_META_FILE), "wt", encoding="utf-8") as f:
             f.write(meta_json_str)
 
         # create db
@@ -110,7 +110,7 @@ class FileIndex:
             Qdrant.from_documents(
                 chunks,
                 embeddings,
-                path = os.path.join(self.__DISK_FOLDER, index_name, self.__INDEX_FOLDER),
+                path = os.path.join(self.__DISK_FOLDER, document_set, index_name, self.__INDEX_FOLDER),
                 collection_name= self.__CHUNKS_COLLECTION_NAME,
                 force_recreate=True
             )      
@@ -120,6 +120,7 @@ class FileIndex:
     
     def similarity_search(
             self, 
+            document_set : str,
             index_name : str, 
             query: str, 
             embeddings : Embeddings, 
@@ -130,7 +131,8 @@ class FileIndex:
         if self.in_memory:
             client = QdrantClient(location=":memory:")
         else:
-            client = QdrantClient(path = os.path.join(self.__DISK_FOLDER, index_name, self.__INDEX_FOLDER))
+            index_folder = os.path.join(self.__DISK_FOLDER, document_set, index_name, self.__INDEX_FOLDER)
+            client = QdrantClient(path = index_folder)
 
         qdrant = Qdrant(
                     client= client,
@@ -144,22 +146,24 @@ class FileIndex:
         search_results : list[tuple[Document, float]] = qdrant.similarity_search_with_score(query, k= sample_count, score_threshold = score_threshold)
         return [SearchResult(s[0].page_content, s[1], s[0].metadata) for s in search_results]
 
-    def get_index_name_list(self) -> list[str]:
+    def get_index_name_list(self, document_set : str) -> list[str]:
         """Get list of available indexes"""
-        dir_list = os.listdir(self.__DISK_FOLDER)
-        return dir_list
+        index_folder = os.path.join(self.__DISK_FOLDER, document_set)
+        if not os.path.isdir(index_folder):
+            return []
+        return os.listdir(index_folder)
 
-    def get_file_index_meta(self, index_name : str) -> FileIndexMeta:
+    def get_file_index_meta(self, document_set : str, index_name : str) -> FileIndexMeta:
         """Get meta info about index"""
         try:
-            with open(os.path.join(self.__DISK_FOLDER, index_name, self.__INDEX_META_FILE), "rt", encoding="utf-8") as f:
+            with open(os.path.join(self.__DISK_FOLDER, document_set, index_name, self.__INDEX_META_FILE), "rt", encoding="utf-8") as f:
                 json_data = f.read()
             file_index_meta = FileIndexMeta.from_json(json_data) # pylint: disable=E1101
             return file_index_meta
         except Exception as error: # pylint: disable=W0718
             return FileIndexMeta(None, None, None, error)
     
-    def delete_index(self, index_name : str):
+    def delete_index(self, document_set : str, index_name : str):
         """Delete existed index"""
-        index_folder = os.path.join(self.__DISK_FOLDER, index_name)
+        index_folder = os.path.join(self.__DISK_FOLDER, document_set, index_name)
         shutil.rmtree(index_folder)
