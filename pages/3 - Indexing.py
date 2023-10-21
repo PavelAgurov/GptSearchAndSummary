@@ -33,7 +33,7 @@ selected_document_set = st.selectbox(
 
 text_files = text_extractor.get_all_source_file_names(selected_document_set, True)
 
-file_list = st.expander(label=f'Available {len(text_files)} chunk(s)').empty()
+file_list = st.expander(label=f'Available {len(text_files)} page(s)').empty()
 text_files_str = "".join([f'{file_name}<br/>' for file_name in text_files])
 file_list.markdown(text_files_str, unsafe_allow_html=True)
 
@@ -47,8 +47,8 @@ embedding_name = st.selectbox(
 use_formatted = st.checkbox(label="Use formatted text where possible")
 
 col1 , col2, col3 = st.columns(3)
-chunk_min_chars      = col1.number_input(label="Chunk min (tokens)", min_value=1, max_value=10000, value= 50)
-chunk_size_tokens    = col2.number_input(label="Chunk size (tokens)", min_value=100, max_value=10000, value= 1000)
+chunk_min_chars      = col1.number_input(label="Chunk min (tokens)", min_value=1, max_value=10000, value= 20)
+chunk_size_tokens    = col2.number_input(label="Chunk size (tokens)", min_value=100, max_value=10000, value= 100)
 chunk_overlap_tokens = col3.number_input(label="Сhunk overlap (tokens)", min_value=0, max_value=1000, value= 0)
 
 st.info("Index will be created from scratch!")

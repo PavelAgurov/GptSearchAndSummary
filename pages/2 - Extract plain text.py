@@ -1,5 +1,5 @@
 """
-    Extract plain text page
+    Extract plain text page as set of pages
 """
 # pylint: disable=C0301,C0103,C0304,C0303,W0611
 
@@ -15,7 +15,7 @@ text_extractor = BackEndCore.get_text_extractor()
 document_set_manager = BackEndCore.get_document_set_manager()
 
 # ------------------------------- UI Setup
-PAGE_NAME = "Extract plain text"
+PAGE_NAME = "Extract plain text as set of pages"
 st.set_page_config(page_title= PAGE_NAME, layout="wide")
 st.title(PAGE_NAME)
 streamlit_hack_remove_top_space()
@@ -38,12 +38,15 @@ file_list.markdown(uploaded_files_str, unsafe_allow_html=True)
 text_files = text_extractor.get_all_source_file_names(selected_document_set, True)
 
 override_all = st.checkbox(label="Override all")
+pages_message = f'There are {len(text_files)} pages for selected document set.'
 if override_all:
-    st.info(f'There are {len(text_files)} chunks for selected document set. They will be re-created.')
-else:
-    st.info(f'There are {len(text_files)} chunks for selected document set.')
-run_llm_formatter = st.checkbox(label="Pre-processing: format documents with LLM")
-run_table_extraction = st.checkbox(label="Extract tables")
+    pages_message+= ' They will be re-created.'
+st.info(pages_message)
+
+run_html_llm_formatter = st.checkbox(label="Format text into HTML with LLM")
+store_as_facts_list    = st.checkbox(label="Store as fact list")
+run_table_extraction   = st.checkbox(label="Extract tables")
+
 if run_table_extraction:
     st.info('Tables will be extracted from formatted documents if they were created.')
 
@@ -69,7 +72,7 @@ extraction_result = BackEndCore().run_text_extraction(
     selected_document_set,
     BackendTextExtractionParams(
         override_all,
-        run_llm_formatter,
+        run_html_llm_formatter,
         run_table_extraction,
         show_progress_callback
     )

@@ -81,6 +81,9 @@ class FileIndex:
         chunks  = token_chunk_splitter.split_into_documents(input_with_meta)
         log.append(f'Total count of chunks {len(chunks)}')
 
+        # remove index before creating
+        self.delete_index(document_set, index_name)
+
         # create index folder
         if not self.in_memory:
             os.makedirs(os.path.join(self.__DISK_FOLDER, document_set, index_name), exist_ok=True)
@@ -97,24 +100,31 @@ class FileIndex:
             f.write(meta_json_str)
 
         # create db
-        if self.in_memory:
-            Qdrant.from_documents(
-                chunks,
-                embeddings,
-                location=":memory:",
-                collection_name= self.__CHUNKS_COLLECTION_NAME,
-                force_recreate=True
-            )
-            log.append('Index has been stored in memory')
-        else:
-            Qdrant.from_documents(
-                chunks,
-                embeddings,
-                path = os.path.join(self.__DISK_FOLDER, document_set, index_name, self.__INDEX_FOLDER),
-                collection_name= self.__CHUNKS_COLLECTION_NAME,
-                force_recreate=True
-            )      
-            log.append('Index has been stored on disk')
+        qdrant = None
+        try:
+            if self.in_memory:
+                qdrant = Qdrant.from_documents(
+                    chunks,
+                    embeddings,
+                    location=":memory:",
+                    collection_name= self.__CHUNKS_COLLECTION_NAME,
+                    force_recreate=True
+                )
+                log.append('Index has been stored in memory')
+            else:
+                qdrant = Qdrant.from_documents(
+                    chunks,
+                    embeddings,
+                    path = os.path.join(self.__DISK_FOLDER, document_set, index_name, self.__INDEX_FOLDER),
+                    collection_name= self.__CHUNKS_COLLECTION_NAME,
+                    force_recreate=True
+                )      
+                log.append('Index has been stored on disk')
+        except Exception as error: # pylint: disable=W0718
+            log.append(error)
+
+        if qdrant is not None:
+            qdrant.client.close()
 
         return log
     
@@ -166,4 +176,5 @@ class FileIndex:
     def delete_index(self, document_set : str, index_name : str):
         """Delete existed index"""
         index_folder = os.path.join(self.__DISK_FOLDER, document_set, index_name)
-        shutil.rmtree(index_folder)
+        if os.path.isdir(index_folder):
+            shutil.rmtree(index_folder)

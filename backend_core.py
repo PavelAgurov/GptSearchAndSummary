@@ -23,10 +23,10 @@ IN_MEMORY = False
 @dataclass
 class BackendTextExtractionParams:
     """Parameters of text extraction"""
-    override_all         : bool
-    run_llm_formatter    : bool
-    run_table_extraction : bool
-    show_progress_callback : Callable[[str], None]
+    override_all            : bool
+    run_html_llm_formatter  : bool # run LLM to convert text into HTML
+    run_table_extraction    : bool
+    show_progress_callback  : Callable[[str], None]
 
 @dataclass
 class BackendFileIndexingParams:
@@ -140,16 +140,19 @@ class BackEndCore():
             params.override_all,
             params.show_progress_callback
         )
+
+        # extract plain text
         output_log : list[str] = text_extractor.text_extraction(document_set, uploaded_files, textExtractorParams)
 
-        if params.run_llm_formatter or params.run_table_extraction:
+        # additional formatting and table extraction
+        if params.run_html_llm_formatter or params.run_table_extraction:
             plain_text_files = text_extractor.get_all_source_file_names(document_set, True)
             for plain_text_file_name in plain_text_files:
                 plain_text = text_extractor.get_input_by_file_name(document_set, plain_text_file_name)
                 if len(plain_text) < self.__MIN_PLAIN_TEXT_SIZE:
                     continue
 
-                if params.run_llm_formatter:
+                if params.run_html_llm_formatter:
                     self.__exec_llm_formatter(
                         document_set, 
                         plain_text_file_name, 

@@ -11,7 +11,7 @@ from dataclasses import dataclass
 import langchain
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.embeddings import SentenceTransformerEmbeddings
-from langchain import PromptTemplate
+from langchain.prompts.prompt import PromptTemplate
 from langchain.schema.output_parser import StrOutputParser
 from langchain.cache import SQLiteCache
 from langchain.callbacks import get_openai_callback

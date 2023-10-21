@@ -27,7 +27,14 @@ class SourceStorage:
 
     def save_file(self, document_set: str, file_name : str, buffer : Any):
         """Save file from buffer into file_name on disk"""
-        with open(self.__get_file_name(document_set, file_name),"wb") as file:
+        full_file_name = self.__get_file_name(document_set, file_name)
+
+        if isinstance(buffer, str):
+            with open(full_file_name,"wt", encoding="utf-8") as file_txt:
+                file_txt.write(buffer)
+            return
+
+        with open(full_file_name,"wb") as file:
             file.write(buffer)
 
     def get_all_files(self, document_set: str, only_names : bool = False) -> list[str]:

@@ -9,6 +9,11 @@ import os
 from dataclasses import dataclass
 
 @dataclass
+class DocumentParserParams:
+    """Parser parameters"""
+    set_chunk_headers : bool # set h1/h2/h3 headers for each chunk
+
+@dataclass
 class DocumentContentItem:
     """Content item of the document"""
     file_name    : str

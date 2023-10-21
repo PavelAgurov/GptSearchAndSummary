@@ -5,7 +5,7 @@
 
 from dataclasses import dataclass
 import json
-from langchain import PromptTemplate
+from langchain.prompts.prompt import PromptTemplate
 from langchain.chains import LLMChain
 from langchain.callbacks import get_openai_callback
 

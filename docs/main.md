@@ -8,7 +8,7 @@ This page allows to create document set. All other operations will be in scope o
 
 Document sets are stored in file `.document-set\document-set.json`
 
-### 1. Upload files
+### 1. Upload content
 
 Here you can upload documents into document set (or delete documents from document set).
 
@@ -65,11 +65,12 @@ streamlit run main.py
 
 - [ ] Delete document set
 
-### 1. Backlog: Upload files
+### 1. Backlog: Upload content
 
 - [x] Upload file(s)
 - [x] Delete file(s)
 - [x] Document set
+- [ ] Document content by URL
 
 ### 2. Backlog: Extract plain text
 

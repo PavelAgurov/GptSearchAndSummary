@@ -13,7 +13,7 @@ from backend_core import BackEndCore
 document_set_manager = BackEndCore.get_document_set_manager()
 
 # ------------------------------- UI Setup
-PAGE_NAME = "Document set"
+PAGE_NAME = "Document Sets"
 st.set_page_config(page_title= PAGE_NAME, layout="wide")
 st.title(PAGE_NAME)
 streamlit_hack_remove_top_space()

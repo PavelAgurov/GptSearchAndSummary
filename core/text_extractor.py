@@ -10,10 +10,11 @@ from dataclasses import dataclass
 from typing import Callable
 
 from core.parsers.base_parser import BaseParser, DocumentParserResult
-from core.parsers.pdf_parser import PdfParser
-from core.parsers.msg_parser import MsgParser
+from core.parsers.pdf_parser  import PdfParser
+from core.parsers.msg_parser  import MsgParser
 from core.parsers.docx_parser import DocxParser
-from core.parsers.txt_parser import TxtParser
+from core.parsers.txt_parser  import TxtParser
+from core.parsers.html_parser import HtmlParser
 from core.parsers.unst_parser import UnstructuredParser
 
 @dataclass
@@ -32,10 +33,12 @@ class TextExtractor:
     __TABLES_EXT = '.tables.json'
 
     __parser_map = {
-        '.pdf' : PdfParser,
-        '.msg' : MsgParser,
+        '.pdf'  : PdfParser,
+        '.msg'  : MsgParser,
         '.docx' : DocxParser,
-        '.txt' : TxtParser
+        '.txt'  : TxtParser,
+        '.html' : HtmlParser,
+        '.htm'  : HtmlParser
     }
 
     def __init__(self):
