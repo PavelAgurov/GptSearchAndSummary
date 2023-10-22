@@ -8,7 +8,7 @@ from typing import Callable
 
 from core.file_indexing import FileIndex, FileIndexParams
 from core.source_storage import SourceStorage
-from core.llm_manager import LlmManager
+from core.llm_manager import LlmManager, LlmFactsResult
 from core.document_set_manager import DocumentSetManager
 from core.text_extractor import TextExtractor, TextExtractorParams
 from core.parsers.chunk_splitters.base_splitter import ChunkSplitterParams
@@ -26,6 +26,8 @@ class BackendTextExtractionParams:
     override_all            : bool
     run_html_llm_formatter  : bool # run LLM to convert text into HTML
     run_table_extraction    : bool
+    store_as_facts_list     : bool # extract facts and store it as plain text
+    fact_context            : str  # context to extact facts
     show_progress_callback  : Callable[[str], None]
 
 @dataclass
@@ -142,7 +144,7 @@ class BackEndCore():
         )
 
         # extract plain text
-        output_log : list[str] = text_extractor.text_extraction(document_set, uploaded_files, textExtractorParams)
+        output_log : list[str] = text_extractor.text_extraction_and_save(document_set, uploaded_files, textExtractorParams)
 
         # additional formatting and table extraction
         if params.run_html_llm_formatter or params.run_table_extraction:
@@ -172,6 +174,19 @@ class BackEndCore():
                         params.show_progress_callback,
                         output_log
                     )
+
+        # fact extractor
+        if params.store_as_facts_list:
+            plain_text_files = text_extractor.get_all_source_file_names(document_set, True)
+            for index, plain_text_file_name in enumerate(plain_text_files):
+                params.show_progress_callback(f'Extract facts from {plain_text_file_name} ({index+1}/{len(plain_text_files)})...')
+                plain_text = text_extractor.get_input_by_file_name(document_set, plain_text_file_name)
+                fact_list_result : LlmFactsResult = llm_manager.get_fact_list(plain_text, params.fact_context)
+                if fact_list_result.error:
+                    output_log.append(f'ERROR. File={plain_text_file_name}. {fact_list_result.error}')
+                    continue
+                text_extractor.save_fact_text(document_set, plain_text_file_name, fact_list_result.fact_list_str)
+
 
         return output_log
 

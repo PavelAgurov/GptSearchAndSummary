@@ -44,8 +44,12 @@ if override_all:
 st.info(pages_message)
 
 run_html_llm_formatter = st.checkbox(label="Format text into HTML with LLM")
-store_as_facts_list    = st.checkbox(label="Store as fact list")
 run_table_extraction   = st.checkbox(label="Extract tables")
+
+col_f1, col_f2 = st.columns([10, 40])
+col_f1.markdown('<br/>', unsafe_allow_html=True) # need to center checkbox
+store_as_facts_list = col_f1.checkbox(label="Store as fact list")
+fact_context        = col_f2.text_input(label="Context of facts:", disabled= not store_as_facts_list)
 
 if run_table_extraction:
     st.info('Tables will be extracted from formatted documents if they were created.')
@@ -67,6 +71,10 @@ run_button = st.button(label="Run extraction")
 if not run_button:
     st.stop()
 
+if store_as_facts_list and not fact_context:
+    progress.markdown('Context is requred for fact extractor')
+    st.stop()
+
 progress.markdown('Start converting...')
 extraction_result = BackEndCore().run_text_extraction(
     selected_document_set,
@@ -74,6 +82,8 @@ extraction_result = BackEndCore().run_text_extraction(
         override_all,
         run_html_llm_formatter,
         run_table_extraction,
+        store_as_facts_list,
+        fact_context,
         show_progress_callback
     )
 )

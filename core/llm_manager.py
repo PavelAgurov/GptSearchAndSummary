@@ -61,6 +61,13 @@ class LlmFormatResult:
     error       : str
 
 @dataclass
+class LlmFactsResult:
+    """LLM facts result"""
+    fact_list_str : str
+    token_used    : int
+    error         : str
+
+@dataclass
 class LlmTableResult:
     """LLM table result"""
     output_str  : str
@@ -80,6 +87,9 @@ class LlmManager():
     format_llm    : LLMChain
     format_prompt : PromptTemplate
     format_chain  : LLMChain
+    facts_llm    : LLMChain
+    facts_prompt : PromptTemplate
+    facts_chain  : LLMChain
 
     _BASE_MODEL_NAME = "gpt-3.5-turbo" # gpt-3.5-turbo-16k
     _KT_MODEL_NAME = 'gpt-4'
@@ -102,6 +112,9 @@ class LlmManager():
         self.format_llm = None
         self.format_prompt = None
         self.format_chain = None
+        self.facts_llm    = None
+        self.facts_prompt = None
+        self.facts_chain  = None
 
     def __get_api_key(self):
         return os.environ["OPENAI_API_KEY"]
@@ -243,4 +256,41 @@ class LlmManager():
         format_result_xml = parse_llm_xml(format_result, ["output_text"])
         return LlmFormatResult(format_result_xml["output_text"], llm_callback.total_tokens, None)
 
+    def get_fact_list(self, input_text : str, context : str) -> LlmFactsResult:
+        """Run LLM fact extractor"""
+        if not self.facts_llm:
+            self.facts_llm = ChatOpenAI(
+                    openai_api_key= self.__get_api_key(),
+                    model_name  = self._BASE_MODEL_NAME,
+                    temperature = 0,
+                    max_tokens  = 1500
+            )
+            self.facts_prompt = PromptTemplate.from_template(prompts.extract_facts_prompt_template)
+            self.facts_chain  = self.facts_prompt | self.facts_llm | StrOutputParser()
+
+        facts_result = ''
+        total_tokens = 0
+        try:
+            with get_openai_callback() as llm_callback:
+                facts_result = self.facts_chain.invoke({
+                        "input_text" : input_text,
+                        "context"    : context
+                    })
+            total_tokens = llm_callback.total_tokens
+        except Exception as error_llm: # pylint: disable=W0718
+            return LlmFactsResult('', total_tokens, error_llm)
+
+        print(f'FACTS: {facts_result}')
+
+        try:
+            facts_result_json = get_llm_json(facts_result)
+
+            fact_list = []
+            for f in facts_result_json['relevant_facts']:
+                fact_list.append(f["fact"])
+
+            fact_list_str = '\n\n'.join(fact_list)
+            return LlmFactsResult(fact_list_str, total_tokens, None)
+        except Exception as error_json: # pylint: disable=W0718
+            return LlmFactsResult('', total_tokens, error_json)
 

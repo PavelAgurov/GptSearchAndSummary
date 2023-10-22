@@ -29,6 +29,7 @@ class TextExtractor:
     __DISK_FOLDER = '.document-plain-text'
     __PLAIN_TEXT_EXT = '.txt'
     __FORMATTER_EXT = '.html'
+    __FACTS_EXT = '.facts.txt'
     __META_EXT = '.json'
     __TABLES_EXT = '.tables.json'
 
@@ -51,7 +52,7 @@ class TextExtractor:
         """Create file name for meta info"""
         return f'{source_file_name}{self.__META_EXT}'
 
-    def text_extraction(self, document_set : str, file_list : list[str], params : TextExtractorParams) -> list[str]:
+    def text_extraction_and_save(self, document_set : str, file_list : list[str], params : TextExtractorParams) -> list[str]:
         """Convert into plain text"""
         
         document_set_folder = self.__get_document_set_folder_for_plain_text(document_set)
@@ -115,9 +116,15 @@ class TextExtractor:
         if not os.path.isdir(document_set_folder):
             return []
         file_list = os.listdir(document_set_folder)
+
+        file_list = [file_name for file_name in file_list 
+                     if file_name.endswith(self.__PLAIN_TEXT_EXT) and \
+                        not file_name.endswith(self.__FACTS_EXT)
+                    ]
+
         if only_names:
-            return [os.path.basename(file_name) for file_name in file_list if file_name.endswith(self.__PLAIN_TEXT_EXT)]
-        return [os.path.join(document_set_folder, file_name) for file_name in file_list if file_name.endswith(self.__PLAIN_TEXT_EXT)]
+            return [os.path.basename(file_name) for file_name in file_list]
+        return [os.path.join(document_set_folder, file_name) for file_name in file_list]
 
     def __get_source_file_names(self, document_set : str, input_file_list : list[str], only_names : bool = False) -> list[str]:
         """Get files from plain text folder"""
@@ -180,16 +187,25 @@ class TextExtractor:
 
         return result
 
-    def __get_formatted_file_name(self, document_set : str, plain_text_file : str) -> str:
-        source_file = self.__get_source_file_names(document_set, [plain_text_file], False)[0]
-        formatted_file_name = f'{source_file}{self.__FORMATTER_EXT}'
-        return formatted_file_name
+    def __get_formatted_file_name(self, document_set : str, plain_text_file_name : str) -> str:
+        source_file = self.__get_source_file_names(document_set, [plain_text_file_name], False)[0]
+        return f'{source_file}{self.__FORMATTER_EXT}'
 
-    def save_formatted_text(self, document_set : str, plain_text_file : str, formatted_text : str):
+    def __get_facts_file_name(self, document_set : str, plain_text_file_name : str) -> str:
+        source_file = self.__get_source_file_names(document_set, [plain_text_file_name], False)[0]
+        return f'{source_file}{self.__FACTS_EXT}'
+
+    def save_formatted_text(self, document_set : str, plain_text_file_name : str, formatted_text : str):
         """Save formatted text"""
-        formatted_file_name = self.__get_formatted_file_name(document_set, plain_text_file)
+        formatted_file_name = self.__get_formatted_file_name(document_set, plain_text_file_name)
         with open(formatted_file_name, "wt", encoding="utf-8") as f:
             f.write(formatted_text)
+
+    def save_fact_text(self, document_set : str, plain_text_file_name : str, facts : str):
+        """Save fact list text"""
+        fact_file_name = self.__get_facts_file_name(document_set, plain_text_file_name)
+        with open(fact_file_name, "wt", encoding="utf-8") as f:
+            f.write(facts)
 
     def get_formatted_text(self, document_set : str, plain_text_file : str) -> str:
         """Get formatted text"""
