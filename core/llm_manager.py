@@ -24,8 +24,9 @@ from core.llm.refine_answer import RefineAnswerChain, RefineAnswerResult
 
 class EmbeddingType(Enum):
     """Types of embeddings"""
-    OPENAI = "Open AI Embeddings"
-    SBERT = "SBERT (https://www.sbert.net/)"
+    OPENAI  = "Open AI Embeddings"
+    SBERT   = "SBERT (https://www.sbert.net/)"
+    MULTILP = "paraphrase-multilingual-MiniLM-L12-v2"  
 
 class LlmError(Exception):
     """Lmm related exception"""
@@ -120,6 +121,12 @@ class LlmManager():
             return SentenceTransformerEmbeddings(
                 model_name= 'sentence-transformers/all-MiniLM-L6-v2',
                 model_kwargs={"device": "cpu"}
+            )
+        
+        if embedding_name == EmbeddingType.MULTILP.value:
+            # https://huggingface.co/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+            return SentenceTransformerEmbeddings(
+                model_name= 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2'
             )
         
         raise LlmError(f'Unsupported embedding {embedding_name}')

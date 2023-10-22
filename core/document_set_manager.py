@@ -33,8 +33,7 @@ class DocumentSetManager:
         self.in_memory = in_memory
         self._storage = DocumentSetList(list[DocumentSetItem]())
         if not self.in_memory:
-            if not os.path.isdir(self.__DISK_FOLDER):
-                os.mkdir(self.__DISK_FOLDER)
+            os.makedirs(self.__DISK_FOLDER, exist_ok=True)
 
     def __get_storage_file_name(self):
         """Get storage file name"""
@@ -46,6 +45,10 @@ class DocumentSetManager:
             return
         json_str = self._storage.to_json()
         file_name = self.__get_storage_file_name()
+
+        dir_name = os.path.dirname(file_name)
+        os.makedirs(dir_name, exist_ok=True)
+
         with open(file_name,"wt", encoding="utf-8") as file:
             file.write(json_str)
 

@@ -51,10 +51,13 @@ class FileIndex:
     #      \<index-name>
     #         \index
     #             <Qdrant db>
+    #         \chunks
+    #             chunk-nnnnn.txt
     #         index_meta.json
 
     __DISK_FOLDER = '.document-index'
     __INDEX_FOLDER = 'index'
+    __CHUNKS_FOLDER = 'chunks'
     __CHUNKS_COLLECTION_NAME = 'chunks'
     __INDEX_META_FILE = 'index_meta.json'
 
@@ -62,6 +65,25 @@ class FileIndex:
         self.in_memory = in_memory
         if not in_memory:
             os.makedirs(self.__DISK_FOLDER, exist_ok=True)
+
+    def get_chunk_name(self, index : int) -> str:
+        """Get chunk file name by index"""
+        return f'chunk-{index:05}.txt'
+
+    def save_chunks(
+            self, 
+            document_set : str, 
+            index_name : str, 
+            chunks : list[Document]):
+        """Save chunks"""
+        chunks_folder = os.path.join(self.__DISK_FOLDER, document_set, index_name, self.__CHUNKS_FOLDER)
+        if os.path.isdir(chunks_folder):
+            shutil.rmtree(chunks_folder)
+        os.makedirs(chunks_folder)
+        for index, document in enumerate(chunks):
+            chunk_file_name = self.get_chunk_name(index)
+            with open(os.path.join(chunks_folder, chunk_file_name), "wt", encoding="utf-8") as f:
+                f.write(document.page_content)
 
     def run_indexing(
             self,
@@ -83,6 +105,9 @@ class FileIndex:
 
         # remove index before creating
         self.delete_index(document_set, index_name)
+
+        # save all chunks
+        self.save_chunks(document_set, index_name, chunks)
 
         # create index folder
         if not self.in_memory:
