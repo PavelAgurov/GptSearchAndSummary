@@ -123,14 +123,13 @@ class TextExtractor:
                     ]
 
         if only_names:
-            return [os.path.basename(file_name) for file_name in file_list]
+            return [os.path.basename(file_name).removesuffix(self.__PLAIN_TEXT_EXT) for file_name in file_list]
+        
         return [os.path.join(document_set_folder, file_name) for file_name in file_list]
 
-    def __get_source_file_names(self, document_set : str, input_file_list : list[str], only_names : bool = False) -> list[str]:
-        """Get files from plain text folder"""
+    def __convert_source_file_names(self, document_set : str, input_file_list : list[str], only_names : bool = False) -> list[str]:
+        """Convert file names into full names or only names"""
         document_set_folder = self.__get_document_set_folder_for_plain_text(document_set)
-        if not os.path.isdir(document_set_folder):
-            return []
         file_list = []
         for input_file in input_file_list:
             if not input_file.endswith(self.__PLAIN_TEXT_EXT):
@@ -166,14 +165,14 @@ class TextExtractor:
 
     def get_input_by_file_name(self, document_set : str, input_file : str) -> str:
         """Get all available data"""
-        source_files = self.__get_source_file_names(document_set, [input_file], False)
+        source_files = self.__convert_source_file_names(document_set, [input_file], False)
         with open(source_files[0], encoding="utf-8") as f:
             source = f.read()
         return source
 
     def get_input_with_meta_by_files(self,  document_set : str, input_file_list : list[str]) -> list[tuple([str, {}])]:
         """Get all available data with meta by file names"""
-        source_files = self.__get_source_file_names(document_set, input_file_list, False)
+        source_files = self.__convert_source_file_names(document_set, input_file_list, False)
 
         result = list[tuple([str, {}])]()
         for source_file in source_files:
@@ -188,11 +187,11 @@ class TextExtractor:
         return result
 
     def __get_formatted_file_name(self, document_set : str, plain_text_file_name : str) -> str:
-        source_file = self.__get_source_file_names(document_set, [plain_text_file_name], False)[0]
+        source_file = self.__convert_source_file_names(document_set, [plain_text_file_name], False)[0]
         return f'{source_file}{self.__FORMATTER_EXT}'
 
     def __get_facts_file_name(self, document_set : str, plain_text_file_name : str) -> str:
-        source_file = self.__get_source_file_names(document_set, [plain_text_file_name], False)[0]
+        source_file = self.__convert_source_file_names(document_set, [plain_text_file_name], False)[0]
         return f'{source_file}{self.__FACTS_EXT}'
 
     def save_formatted_text(self, document_set : str, plain_text_file_name : str, formatted_text : str):
@@ -218,7 +217,7 @@ class TextExtractor:
 
     def __get_table_file_name(self, document_set : str, plain_text_file : str) -> str:
         """Build name of table file"""
-        source_file = self.__get_source_file_names(document_set, [plain_text_file], False)[0]
+        source_file = self.__convert_source_file_names(document_set, [plain_text_file], False)[0]
         tables_file_name = f'{source_file}{self.__TABLES_EXT}'
         return tables_file_name
 
@@ -259,4 +258,20 @@ class TextExtractor:
             json_text = f.read()
         return json_text
         
+    def get_all_facts_file_names(self, document_set : str, only_names : bool = False) -> list[str]:
+        """Get all available files with facts"""
+        document_set_folder = self.__get_document_set_folder_for_plain_text(document_set)
+        if not os.path.isdir(document_set_folder):
+            return []
+        file_list = os.listdir(document_set_folder)
+        file_list = [file_name for file_name in file_list if file_name.endswith(self.__FACTS_EXT)]
+        if only_names:
+            return [os.path.basename(file_name).removesuffix(self.__FACTS_EXT).removesuffix(self.__PLAIN_TEXT_EXT) for file_name in file_list]
+        return [os.path.join(document_set_folder, file_name) for file_name in file_list]
 
+    def get_facts_from_file(self, document_set : str, plain_text_file_name : str) -> list[str]:
+        """Save fact list text"""
+        fact_file_name = self.__get_facts_file_name(document_set, plain_text_file_name)
+        with open(fact_file_name, "rt", encoding="utf-8") as f:
+            facts = f.read()
+        return facts

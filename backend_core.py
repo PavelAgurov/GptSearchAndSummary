@@ -14,7 +14,6 @@ from core.text_extractor import TextExtractor, TextExtractorParams
 from core.parsers.chunk_splitters.base_splitter import ChunkSplitterParams
 from core.kt_manager import KnowledgeTreeItem, KnowledgeTree, KnowledgeTreeManager
 from core.table_extractor import TableExtractor, TableExtractorResult
-from core.topic_manager import TopicManager
 from core.embedding_manager import EmbeddingManager, EmbeddingItem
 from core.user_query_manager import UserQueryManager
 
@@ -61,7 +60,6 @@ class BackEndCore():
     _SESSION_DOCUMENT_SET = 'document_set_manager'
     _SESSION_KT_MANAGER = 'knowledge_tree_manager'
     _SESSION_TABLE_EXTRACTOR = 'table_extractor'
-    _SESSION_TOPIC_MANAGER = 'topic_manager'
     _SESSION_EMBEDDING_MANAGER = 'embedding_manager'
     _SESSION_USER_QUERY_MANAGER = 'user_query_manager'
 
@@ -131,13 +129,6 @@ class BackEndCore():
         if cls._SESSION_TABLE_EXTRACTOR not in st.session_state:
             st.session_state[cls._SESSION_TABLE_EXTRACTOR] = TableExtractor()
         return st.session_state[cls._SESSION_TABLE_EXTRACTOR]
-
-    @classmethod
-    def get_topic_manager(cls) -> TopicManager:
-        """Get TopicManager"""
-        if cls._SESSION_TOPIC_MANAGER not in st.session_state:
-            st.session_state[cls._SESSION_TOPIC_MANAGER] = TopicManager()
-        return st.session_state[cls._SESSION_TOPIC_MANAGER]
 
     @classmethod
     def get_user_query_manager(cls) -> UserQueryManager:

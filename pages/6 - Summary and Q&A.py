@@ -19,7 +19,6 @@ dialog_storage = st.session_state[SESSION_DIALOG_STORAGE]
 # ------------------------------- Core
 
 document_set_manager = BackEndCore.get_document_set_manager()
-topic_manager = BackEndCore.get_topic_manager()
 
 # ------------------------------- UI Setup
 PAGE_NAME = "Summary and Q&A"
@@ -35,11 +34,11 @@ selected_document_set = st.selectbox(
     key="selected_document_set_summary"
 )
 
-selected_topic = st.selectbox(
-    label="Topic:",
-    options= topic_manager.get_topic_list(),
-    key="topic_to_edit"
-)
+# selected_topic = st.selectbox(
+#     label="Topic:",
+#     options= topic_manager.get_topic_list(),
+#     key="topic_to_edit"
+# )
 
 prompt = st.chat_input("Your question")
 if prompt:

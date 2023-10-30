@@ -1,5 +1,5 @@
 """
-    Topics page
+    Fact page
 """
 # pylint: disable=C0301,C0103,C0303,W0611
 
@@ -11,10 +11,10 @@ from backend_core import BackEndCore
 # ------------------------------- Core
 
 document_set_manager = BackEndCore.get_document_set_manager()
-topic_manager = BackEndCore.get_topic_manager()
+text_extractor = BackEndCore.get_text_extractor()
 
 # ------------------------------- UI Setup
-PAGE_NAME = "Topics"
+PAGE_NAME = "Fact page"
 st.set_page_config(page_title= PAGE_NAME, layout="wide")
 st.title(PAGE_NAME)
 streamlit_hack_remove_top_space()
@@ -24,13 +24,13 @@ document_set_manager.load()
 selected_document_set = st.selectbox(
     label="Document set:",
     options=document_set_manager.get_all_names(),
-    key="selected_document_set_topics"
+    key="selected_document_facts"
 )
 
-selected_topic = st.selectbox(
-    label="Topic:",
-    options= topic_manager.get_topic_list(),
-    key="topic_to_edit"
-)
 
-st.markdown(f'Similarity request: [{selected_topic.similarity_request}]. Threshold: {selected_topic.similarity_threshold}')
+all_fact_files = text_extractor.get_all_facts_file_names(selected_document_set, True)
+
+for fact_file in all_fact_files:
+    facts = text_extractor.get_facts_from_file(selected_document_set, fact_file)
+    if facts:
+        st.expander(label=fact_file, expanded=False).markdown(facts)
