@@ -15,6 +15,8 @@ from core.parsers.chunk_splitters.base_splitter import ChunkSplitterParams
 from core.kt_manager import KnowledgeTreeItem, KnowledgeTree, KnowledgeTreeManager
 from core.table_extractor import TableExtractor, TableExtractorResult
 from core.topic_manager import TopicManager
+from core.embedding_manager import EmbeddingManager, EmbeddingItem
+from core.user_query_manager import UserQueryManager
 
 import streamlit as st
 
@@ -33,7 +35,7 @@ class BackendTextExtractionParams:
 @dataclass
 class BackendFileIndexingParams:
     """Parameters for file indexing"""
-    embedding_name : str
+    embedding_item : EmbeddingItem
     index_name     : str
     chunk_min      : int 
     chunk_size     : int
@@ -60,6 +62,8 @@ class BackEndCore():
     _SESSION_KT_MANAGER = 'knowledge_tree_manager'
     _SESSION_TABLE_EXTRACTOR = 'table_extractor'
     _SESSION_TOPIC_MANAGER = 'topic_manager'
+    _SESSION_EMBEDDING_MANAGER = 'embedding_manager'
+    _SESSION_USER_QUERY_MANAGER = 'user_query_manager'
 
     __MIN_PLAIN_TEXT_SIZE = 50
 
@@ -101,6 +105,13 @@ class BackEndCore():
         return st.session_state[cls._SESSION_LLM]
 
     @classmethod
+    def get_embedding_manager(cls) -> EmbeddingManager:
+        """Get embedding Manager"""
+        if cls._SESSION_EMBEDDING_MANAGER not in st.session_state:
+            st.session_state[cls._SESSION_EMBEDDING_MANAGER] = EmbeddingManager()
+        return st.session_state[cls._SESSION_EMBEDDING_MANAGER]
+
+    @classmethod
     def get_text_extractor(cls) -> TextExtractor:
         """Get TextExtractor"""
         if cls._SESSION_TEXT_EXTRACTOR not in st.session_state:
@@ -127,6 +138,13 @@ class BackEndCore():
         if cls._SESSION_TOPIC_MANAGER not in st.session_state:
             st.session_state[cls._SESSION_TOPIC_MANAGER] = TopicManager()
         return st.session_state[cls._SESSION_TOPIC_MANAGER]
+
+    @classmethod
+    def get_user_query_manager(cls) -> UserQueryManager:
+        """Get UserQueryManager"""
+        if cls._SESSION_USER_QUERY_MANAGER not in st.session_state:
+            st.session_state[cls._SESSION_USER_QUERY_MANAGER] = UserQueryManager(IN_MEMORY)
+        return st.session_state[cls._SESSION_USER_QUERY_MANAGER]
 
     def run_text_extraction(self, document_set : str, params : BackendTextExtractionParams) -> list[str]:
         """Extract plain text from source files"""
@@ -244,6 +262,7 @@ class BackEndCore():
         llm_manager = self.get_llm_manager()
         file_index = self.get_file_index()
         text_extractor = self.get_text_extractor()
+        embedding_manager = BackEndCore.get_embedding_manager()
 
         fileIndexParams = FileIndexParams(
                 splitter_params= ChunkSplitterParams(
@@ -260,8 +279,9 @@ class BackEndCore():
                 document_set,
                 params.index_name,
                 input_with_meta,
-                params.embedding_name,
-                llm_manager.get_embeddings(params.embedding_name),
+                params.embedding_item.embedding_type.name,
+                params.embedding_item.default_threshold,
+                embedding_manager.get_embeddings(params.embedding_item.embedding_type.name),
                 fileIndexParams
         )
 
@@ -281,6 +301,7 @@ class BackEndCore():
 
         llm_manager = self.get_llm_manager()
         file_index = self.get_file_index()
+        embedding_manager = BackEndCore.get_embedding_manager()
 
         show_status_callback('Load index...')
         fileIndexMeta = file_index.get_file_index_meta(document_set, index_name)
@@ -290,7 +311,7 @@ class BackEndCore():
             document_set,
             index_name,
             query, 
-            llm_manager.get_embeddings(fileIndexMeta.embedding_name), 
+            embedding_manager.get_embeddings(fileIndexMeta.embedding_name), 
             sample_count, 
             score_threshold
         )

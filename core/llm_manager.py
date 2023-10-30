@@ -5,12 +5,9 @@
 # pylint: disable=C0301,C0103,C0304,C0303,W0611,W0511,R0913,R0402
 
 import os
-from enum import Enum
 from dataclasses import dataclass
 
 import langchain
-from langchain.embeddings import OpenAIEmbeddings
-from langchain.embeddings import SentenceTransformerEmbeddings
 from langchain.prompts.prompt import PromptTemplate
 from langchain.schema.output_parser import StrOutputParser
 from langchain.cache import SQLiteCache
@@ -21,12 +18,6 @@ from langchain.chains import LLMChain
 import core.llm.prompts as prompts
 from core.llm.llm_utils import get_llm_json, parse_llm_xml
 from core.llm.refine_answer import RefineAnswerChain, RefineAnswerResult
-
-class EmbeddingType(Enum):
-    """Types of embeddings"""
-    OPENAI  = "Open AI Embeddings"
-    SBERT   = "SBERT (https://www.sbert.net/)"
-    MULTILP = "paraphrase-multilingual-MiniLM-L12-v2"  
 
 class LlmError(Exception):
     """Lmm related exception"""
@@ -122,32 +113,7 @@ class LlmManager():
     def get_model_name(self):
         """Return model name"""
         return self._BASE_MODEL_NAME
-
-    def get_embeddings(self, embedding_name : str):
-        """Embeddings"""
-        if embedding_name == EmbeddingType.OPENAI.value:
-            # https://api.python.langchain.com/en/latest/embeddings/langchain.embeddings.openai.OpenAIEmbeddings.html
-            return OpenAIEmbeddings(openai_api_key= self.__get_api_key())
-        
-        if embedding_name == EmbeddingType.SBERT.value:
-            # https://www.sbert.net/
-            return SentenceTransformerEmbeddings(
-                model_name= 'sentence-transformers/all-MiniLM-L6-v2',
-                model_kwargs={"device": "cpu"}
-            )
-        
-        if embedding_name == EmbeddingType.MULTILP.value:
-            # https://huggingface.co/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
-            return SentenceTransformerEmbeddings(
-                model_name= 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2'
-            )
-        
-        raise LlmError(f'Unsupported embedding {embedding_name}')
-
-    def get_embedding_list(self) -> list[str]:
-        """Get available embeddings"""
-        return [e.value for e in EmbeddingType]
-
+    
     def get_relevance_score(self, query : str, content : str) -> LlmRelevanceScore:
         """Get relevance score betwee query and content"""
 

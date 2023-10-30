@@ -39,6 +39,7 @@ class FileIndexMeta:
     chunkSplitterParams : FileIndexParams
     document_set        : str
     embedding_name      : str
+    default_threshold   : Optional[float] = None
     error               : Optional[str] = None
 
 class FileIndex:
@@ -91,6 +92,7 @@ class FileIndex:
             index_name  : str,
             input_with_meta : list[tuple([str, {}])],
             embedding_name : str,
+            default_threshold : float,
             embeddings : Embeddings, 
             index_params : FileIndexParams) -> list[str]:
         """Index files from file_list based on text_splitter and embeddings and save into DB"""
@@ -117,7 +119,8 @@ class FileIndex:
         file_index_meta = FileIndexMeta(
             index_params,
             document_set,
-            embedding_name
+            embedding_name,
+            default_threshold
         )
 
         meta_json_str = file_index_meta.to_json(indent=4)  # pylint: disable=E1101
@@ -128,7 +131,7 @@ class FileIndex:
         qdrant = None
         try:
             if self.in_memory:
-                qdrant = Qdrant.from_documents(
+                qdrant = Qdrant.from_documents( # pylint: disable=E1101
                     chunks,
                     embeddings,
                     location=":memory:",
@@ -137,7 +140,7 @@ class FileIndex:
                 )
                 log.append('Index has been stored in memory')
             else:
-                qdrant = Qdrant.from_documents(
+                qdrant = Qdrant.from_documents( # pylint: disable=E1101
                     chunks,
                     embeddings,
                     path = os.path.join(self.__DISK_FOLDER, document_set, index_name, self.__INDEX_FOLDER),
@@ -169,7 +172,7 @@ class FileIndex:
             index_folder = os.path.join(self.__DISK_FOLDER, document_set, index_name, self.__INDEX_FOLDER)
             client = QdrantClient(path = index_folder)
 
-        qdrant = Qdrant(
+        qdrant = Qdrant( # pylint: disable=E1102
                     client= client,
                     collection_name= self.__CHUNKS_COLLECTION_NAME,
                     embeddings= embeddings

@@ -15,7 +15,7 @@ CREATE_MODE_EXISTED = "Existed"
 document_set_manager = BackEndCore.get_document_set_manager()
 text_extractor = BackEndCore.get_text_extractor()
 file_index = BackEndCore.get_file_index()
-llm = BackEndCore.get_llm_manager()
+embedding_manager = BackEndCore.get_embedding_manager()
 
 # ------------------------------- UI Setup
 PAGE_NAME = "Indexing"
@@ -27,7 +27,7 @@ hide_footer()
 document_set_manager.load()
 selected_document_set = st.selectbox(
     label="Document set:",
-    options=document_set_manager.get_all_names(),
+    options= document_set_manager.get_all_names(),
     key="selected_document_set_indexing"
 )
 
@@ -37,12 +37,14 @@ file_list = st.expander(label=f'Available {len(text_files)} page(s)').empty()
 text_files_str = "".join([f'{file_name}<br/>' for file_name in text_files])
 file_list.markdown(text_files_str, unsafe_allow_html=True)
 
-embedding_name = st.selectbox(
+embedding_item = st.selectbox(
     "Select embedding:",
     key="embedding_name",
-    options= llm.get_embedding_list(),
+    options= embedding_manager.get_embedding_information_list(),
     index=0
 )
+
+st.info(f'{embedding_item.description}. Recommended default_threshold: {embedding_item.default_threshold}')
 
 use_formatted = st.checkbox(label="Use formatted text where possible")
 
@@ -110,7 +112,7 @@ progress.markdown(f'Start indexing [{index_name}] ...')
 indexing_result = BackEndCore().run_file_indexing(
     selected_document_set,
     BackendFileIndexingParams(
-        embedding_name,
+        embedding_item,
         index_name,
         chunk_min_chars,
         chunk_size_tokens,

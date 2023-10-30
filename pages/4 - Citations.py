@@ -7,10 +7,15 @@ import streamlit as st
 from utils_streamlit import streamlit_hack_remove_top_space, hide_footer
 from backend_core import BackEndCore
 
+# ------------------------------- Const
+QUERY_MODE_NEW = "New query"
+QUERY_MODE_FROM_HISOTRY = "Saved query"
+
 # ------------------------------- Core
 
 document_set_manager = BackEndCore.get_document_set_manager()
 file_index = BackEndCore.get_file_index()
+user_query_manager = BackEndCore.get_user_query_manager()
 
 # ------------------------------- UI Setup
 PAGE_NAME = "Citations"
@@ -38,18 +43,20 @@ if index_name:
     index_info = file_index.get_file_index_meta(selected_document_set, index_name)
     if not index_info.error:
         splitter_params= index_info.chunkSplitterParams.splitter_params
-        st.info(f'Document set: {index_info.document_set}.\
+        index_info_str = f'Document set: {index_info.document_set}.\
                 Embedding name: {index_info.embedding_name}. \
                 Chunk min={splitter_params.chunk_min_tokens}, \
                 chunk size={splitter_params.tokens_per_chunk},\
-                overlap={splitter_params.chunk_overlap_tokens}'
-        )
+                overlap={splitter_params.chunk_overlap_tokens}.'
+        if index_info.default_threshold > 0:
+            index_info_str += f' Recommended Default threshold for similarity: {index_info.default_threshold}.'
+        st.info(index_info_str)
     else:
         st.info(index_info.error)
         st.stop()
 
 col11, col12 = st.columns(2)
-sample_count = col11.number_input(label="Count of samples:", min_value=1, max_value=100, value=10)
+sample_count = col11.number_input(label="Count of samples:", min_value=1, max_value=100, value=3)
 threshold = col12.number_input(label="Similarity threshold:", min_value=0.00, max_value=1.00, value=0.50, step=0.01, format="%.2f")
 
 col41, col42, _ = st.columns([20, 20, 80])
@@ -58,7 +65,18 @@ llm_threshold = col42.number_input(label="LLM Threshold:", min_value=0.00, max_v
 
 build_summary = st.checkbox(label="Build summary", value=True)
 
-query = st.text_input(label="Query")
+query_mode = st.radio(
+    label="Query", 
+    options= [QUERY_MODE_NEW, QUERY_MODE_FROM_HISOTRY], 
+    index=0, 
+    label_visibility="collapsed", 
+    horizontal=True
+)
+
+if query_mode == QUERY_MODE_NEW:
+    query = st.text_input(label="Query:")
+if query_mode == QUERY_MODE_FROM_HISOTRY:
+    query = st.selectbox(label="Saved query:", options= user_query_manager.get_query_history_query(selected_document_set, 10))
 
 col21, col22 = st.columns(2)
 run_button = col21.button(label="Run")
@@ -73,8 +91,13 @@ def show_status_callback(status_str : str):
     run_status.markdown(status_str)
 
 # ------------------------------- App
+show_status_callback('')
 
-if not query or not run_button:
+if not query:
+    show_status_callback('No query')
+    st.stop()
+
+if not run_button:
     st.stop()
 
 score_threshold = threshold
@@ -111,6 +134,11 @@ if not chunk_list:
     summary_result_container.markdown('There are no relevant information')
     st.stop()
     
-if build_summary:
-    summary = BackEndCore().build_answer(query, chunk_list)
-    summary_result_container.markdown(summary)
+if not build_summary:
+    st.stop()
+
+summary = BackEndCore().build_answer(query, chunk_list)
+summary_result_container.markdown(summary)
+
+setup_str = f'sample_count={sample_count}, score_threshold={score_threshold}, add_llm_score={add_llm_score}, llm_threshold={llm_threshold}'
+user_query_manager.log_query(selected_document_set, query, summary, setup_str)
