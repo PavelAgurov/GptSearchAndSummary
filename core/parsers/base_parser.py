@@ -43,7 +43,7 @@ class BaseParser():
         try:
             return self._do_parse()
         except Exception as error: # pylint: disable=W0718
-            error_message = f'ERROR: file {self.file_name}. Exception: {error}'
+            error_message = f'ERROR: file {self.file_name}. Exception: {error} [{type(error)}]'
             return DocumentParserResult(None, None, error_message)
         
     @abstractmethod

@@ -12,8 +12,13 @@ class TxtParser(BaseParser):
     def _do_parse(self) -> DocumentParserResult:
         """Get plain text from txt"""
 
-        with open(self.file_name, encoding="utf-8") as f:
-            page_content = f.read()
+        try:
+            with open(self.file_name, encoding="utf-8") as f:
+                page_content = f.read()
+        except UnicodeDecodeError:
+            with open(self.file_name, encoding="cp1251") as f:
+                page_content = f.read()
+
         content = DocumentContentItem(
                             self.base_file_name,
                             page_content,
