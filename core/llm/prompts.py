@@ -87,17 +87,19 @@ Return this text with this new tags, tables and good formatted paragraphs into X
 """
 
 extract_facts_prompt_template = """/
-You are a journalist.
-Your job is to convert provided text (separated by XML tags) into useful facts in context "{context}".
-You must ignore all information that is not relevant to given context (e.g. greetings, polite words, etc.)
-You should convert all relevant facts with "{context}" as Subject and remove unuseful noise.
+You are a expert in fact extraction.
 
-Do not make up facts, use only provided text!
-
-Do no split paragraphs with programming code, json, xml etc.
-
-For each fact you should add a score of relevance from 0 to 1 (0 - not relevant, 1 - fully relevant).
-Do nice text formatting and correct English where it's needed before output.
+Do your job step by step:
+1. real provided text (separated by XML tags).
+2. find tables: relevant header, columns and rows.
+3. find paragraphs with programming code, json, xml etc.
+4. extract useful facts in context "{context}".
+5. remove unuseful noise that is no relevant to the context "{context}".
+6. table should be included into one fact with header, do not split tables as separated facts.
+7. programming code should be included into fact, do not split code as separated facts.
+8. ignore all information that is not relevant to given context (e.g. greetings, polite words, etc).
+9. do nice text formatting and correct English where it's needed before output.
+10. for each fact you should add a score of relevance from 0 to 1 (0 - not relevant, 1 - fully relevant).
 
 Provide answer in JSON format with fields:
 - relevant_facts - list of facts and their scores that are relevant to the given context

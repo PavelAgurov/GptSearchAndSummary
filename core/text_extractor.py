@@ -33,6 +33,8 @@ class TextExtractor:
     __META_EXT = '.json'
     __TABLES_EXT = '.tables.json'
 
+    __FACT_LINE_SEPARATOR = '#### FACT ####'
+
     __parser_map = {
         '.pdf'  : PdfParser,
         '.msg'  : MsgParser,
@@ -200,12 +202,24 @@ class TextExtractor:
         with open(formatted_file_name, "wt", encoding="utf-8") as f:
             f.write(formatted_text)
 
-    def save_fact_text(self, document_set : str, plain_text_file_name : str, facts : str):
+    def save_fact_text(self, document_set : str, plain_text_file_name : str, fact_list : list[str]):
         """Save fact list text"""
         fact_file_name = self.__get_facts_file_name(document_set, plain_text_file_name)
         with open(fact_file_name, "wt", encoding="utf-8") as f:
-            f.write(facts)
+            for fact in fact_list:
+                f.write(self.__FACT_LINE_SEPARATOR)
+                f.write('\n')
+                f.write(fact)
+                f.write('\n\n')
 
+    def get_facts_from_file(self, document_set : str, plain_text_file_name : str) -> list[str]:
+        """Save fact list text"""
+        fact_file_name = self.__get_facts_file_name(document_set, plain_text_file_name)
+        with open(fact_file_name, "rt", encoding="utf-8") as f:
+            fact_str = f.read()
+        fact_list = [fact.strip() for fact in fact_str.split(self.__FACT_LINE_SEPARATOR) if fact.strip()]
+        return fact_list
+    
     def get_formatted_text(self, document_set : str, plain_text_file : str) -> str:
         """Get formatted text"""
         formatted_file_name = self.__get_formatted_file_name(document_set, plain_text_file)
@@ -269,9 +283,3 @@ class TextExtractor:
             return [os.path.basename(file_name).removesuffix(self.__FACTS_EXT).removesuffix(self.__PLAIN_TEXT_EXT) for file_name in file_list]
         return [os.path.join(document_set_folder, file_name) for file_name in file_list]
 
-    def get_facts_from_file(self, document_set : str, plain_text_file_name : str) -> list[str]:
-        """Save fact list text"""
-        fact_file_name = self.__get_facts_file_name(document_set, plain_text_file_name)
-        with open(fact_file_name, "rt", encoding="utf-8") as f:
-            facts = f.read()
-        return facts

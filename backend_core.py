@@ -194,7 +194,7 @@ class BackEndCore():
                 if fact_list_result.error:
                     output_log.append(f'ERROR. File={plain_text_file_name}. {fact_list_result.error}')
                     continue
-                text_extractor.save_fact_text(document_set, plain_text_file_name, fact_list_result.fact_list_str)
+                text_extractor.save_fact_text(document_set, plain_text_file_name, fact_list_result.fact_list)
 
 
         return output_log

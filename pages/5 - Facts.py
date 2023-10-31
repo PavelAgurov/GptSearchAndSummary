@@ -3,6 +3,7 @@
 """
 # pylint: disable=C0301,C0103,C0303,W0611
 
+import pandas as pd
 import streamlit as st
 from utils_streamlit import streamlit_hack_remove_top_space, hide_footer
 
@@ -41,4 +42,10 @@ all_fact_files = text_extractor.get_all_facts_file_names(selected_document_set, 
 for fact_file in all_fact_files:
     facts = text_extractor.get_facts_from_file(selected_document_set, fact_file)
     if facts:
-        st.expander(label=fact_file, expanded=False).markdown(facts)
+        data = {'Fact': facts}
+        df = pd.DataFrame(data)
+        df = df.applymap(lambda x: x.replace('\n', '<br>'))
+        fact_expander = st.expander(label=fact_file, expanded=False)
+        fact_expander.markdown(df.to_html(escape=False, index=False, header=False), unsafe_allow_html=True)
+        fact_expander.markdown('\n')
+        

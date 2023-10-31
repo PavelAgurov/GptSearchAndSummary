@@ -54,7 +54,7 @@ class LlmFormatResult:
 @dataclass
 class LlmFactsResult:
     """LLM facts result"""
-    fact_list_str : str
+    fact_list     : list[str]
     token_used    : int
     error         : str
 
@@ -253,10 +253,11 @@ class LlmManager():
 
             fact_list = []
             for f in facts_result_json['relevant_facts']:
-                fact_list.append(f["fact"])
+                fact_str = str(f["fact"])
+                fact_str = fact_str.replace('\n\n', '\n')
+                fact_list.append(fact_str)
 
-            fact_list_str = '\n\n'.join(fact_list)
-            return LlmFactsResult(fact_list_str, total_tokens, None)
+            return LlmFactsResult(fact_list, total_tokens, None)
         except Exception as error_json: # pylint: disable=W0718
             return LlmFactsResult('', total_tokens, error_json)
 
