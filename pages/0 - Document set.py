@@ -30,4 +30,4 @@ with st.form(key="addForm", clear_on_submit=True):
     new_name = new_name.strip()
     if submitted and new_name:
         document_set_manager.add(new_name, True)
-        st.experimental_rerun()
+        st.rerun()

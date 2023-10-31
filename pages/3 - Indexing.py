@@ -80,12 +80,12 @@ if create_mode == CREATE_MODE_EXISTED and existed_index_name:
     delete_button = col2e.button(label="Delete index")
     if delete_button:
         file_index.delete_index(selected_document_set, existed_index_name)
-        st.experimental_rerun()
+        st.rerun()
 
     set_as_default_button = col3e.button(label="Set as default index")
     if set_as_default_button:
         document_set_manager.set_default_index(selected_document_set, existed_index_name)
-        st.experimental_rerun()
+        st.rerun()
 
 progress = st.empty()
 

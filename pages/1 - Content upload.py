@@ -51,7 +51,7 @@ if currently_uploaded_files:
         col1.markdown(file_name)
         if col2.button("Del", key=f"button_delete_{index}"):
             source_index.delete_file(selected_document_set, file_name)
-            st.experimental_rerun()
+            st.rerun()
 else:
     current_file_list.markdown("No files available")
 
