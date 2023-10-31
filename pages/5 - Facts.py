@@ -7,6 +7,7 @@ import streamlit as st
 from utils_streamlit import streamlit_hack_remove_top_space, hide_footer
 
 from backend_core import BackEndCore
+from ui.shared_session import set_selected_document_set, set_selected_document_set_index
 
 # ------------------------------- Core
 
@@ -21,12 +22,19 @@ streamlit_hack_remove_top_space()
 hide_footer()
 
 document_set_manager.load()
+
+selected_document_set_data  = [''] + document_set_manager.get_all_names()
+selected_document_set_index = set_selected_document_set_index(selected_document_set_data)
 selected_document_set = st.selectbox(
     label="Document set:",
-    options=document_set_manager.get_all_names(),
-    key="selected_document_facts"
+    options= selected_document_set_data,
+    key="selected_document_facts",
+    index= selected_document_set_index
 )
+set_selected_document_set(selected_document_set)
 
+if not selected_document_set:
+    st.stop()
 
 all_fact_files = text_extractor.get_all_facts_file_names(selected_document_set, True)
 
