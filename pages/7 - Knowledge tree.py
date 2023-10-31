@@ -10,7 +10,7 @@ from streamlit_agraph import agraph, Node, Edge, Config
 from utils_streamlit import streamlit_hack_remove_top_space, hide_footer
 from backend_core import BackEndCore
 from core.kt_manager import KnowledgeTree
-from ui.shared_session import set_selected_document_set, set_selected_document_set_index
+from ui.shared_session import set_selected_document_set, get_selected_document_set_index
 
 # ------------------------------- Core
 
@@ -43,7 +43,7 @@ hide_footer()
 document_set_manager.load()
 
 selected_document_set_data  = [''] + document_set_manager.get_all_names()
-selected_document_set_index = set_selected_document_set_index(selected_document_set_data)
+selected_document_set_index = get_selected_document_set_index(selected_document_set_data)
 selected_document_set = st.selectbox(
     label="Document set:",
     options= selected_document_set_data,

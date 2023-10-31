@@ -7,6 +7,7 @@ import streamlit as st
 
 from utils_streamlit import streamlit_hack_remove_top_space, hide_footer
 from backend_core import BackEndCore
+from ui.shared_session import set_selected_document_set
 
 # ------------------------------- Core
 
@@ -30,4 +31,5 @@ with st.form(key="addForm", clear_on_submit=True):
     new_name = new_name.strip()
     if submitted and new_name:
         document_set_manager.add(new_name, True)
+        set_selected_document_set(new_name)
         st.rerun()

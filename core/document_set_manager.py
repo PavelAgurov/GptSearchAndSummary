@@ -43,7 +43,7 @@ class DocumentSetManager:
         """Save storage"""
         if self.in_memory:
             return
-        json_str = self._storage.to_json()
+        json_str = self._storage.to_json(indent=4)
         file_name = self.__get_storage_file_name()
 
         dir_name = os.path.dirname(file_name)
