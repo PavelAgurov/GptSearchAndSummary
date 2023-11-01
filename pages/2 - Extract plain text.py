@@ -47,7 +47,11 @@ file_list.markdown(uploaded_files_str, unsafe_allow_html=True)
 text_files = text_extractor.get_all_source_file_names(selected_document_set, True)
 
 override_all = st.checkbox(label="Override all")
-pages_message = f'There are {len(text_files)} pages for selected document set.'
+text_files_count = len(text_files)
+if text_files_count > 0:
+    pages_message = f'There are already {text_files_count} pages for selected document set.'
+else:
+    pages_message = 'There are no pages yet for selected document set.'
 if override_all:
     pages_message+= ' They will be re-created.'
 st.info(pages_message)

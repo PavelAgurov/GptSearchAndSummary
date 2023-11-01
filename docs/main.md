@@ -4,13 +4,17 @@
 
 ### 0. Document set
 
-This page allows to create document set. All other operations will be in scope of document set.
+This page allows to create Document set. All other operations will be in scope of Document set.
 
 Document sets are stored in file `.document-set\document-set.json`
 
+Default Document set can be provided by parameter `document-set` in URL:
+
+```http://localhost:8501/?document-set=test```
+
 ### 1. Upload content
 
-Here you can upload documents into document set (or delete documents from document set).
+Here you can upload documents into Document set (or delete documents from Document set).
 
 Files are uploaded into `.document-source\<document-set>` folder.
 
@@ -70,7 +74,7 @@ streamlit run main.py
 - [x] Upload file(s)
 - [x] Delete file(s)
 - [x] Document set
-- [ ] Document content by URL
+- [ ] Document content as HTML by URL
 
 ### 2. Backlog: Extract plain text
 
