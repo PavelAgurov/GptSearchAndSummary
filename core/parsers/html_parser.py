@@ -80,13 +80,11 @@ class HtmlParser(BaseParser):
             return DocumentParserResult([DocumentContentItem(self.base_file_name, content, 1, {})], message, None)
 
         content = self.__extract_content(content_soup, 0, HtmlHeaderStack())
-        pattern = r'<HEADER>(.*?)<\/HEADER>(.*?)<HEADER>|<HEADER>(.*?)<\/HEADER>(.*?)$'
+        pattern = r'<HEADER>(.*?)<\/HEADER>\s*(.*?)(?=<HEADER>|$)'
         matches = re.findall(pattern, content, re.DOTALL)
 
         result_content = list[DocumentContentItem]()
         for index, header_match in enumerate(matches):
-            if not header_match[1]:
-                continue
             text = f'{header_match[0]}\n\n{header_match[1]}'
             result_content.append(DocumentContentItem(
                             self.base_file_name,
