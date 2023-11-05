@@ -9,9 +9,16 @@ import os
 from dataclasses import dataclass
 
 @dataclass
+class DocumentParserHTMLParams:
+    """Params how to parse HTML"""
+    combine_html_headers : bool # combine HTML headers
+    excluded_names       : list[str] # to exclude html names
+    tag_to_remove        : list[str]
+
+@dataclass
 class DocumentParserParams:
     """Parser parameters"""
-    set_chunk_headers : bool # set h1/h2/h3 headers for each chunk
+    html_params : DocumentParserHTMLParams
 
 @dataclass
 class DocumentContentItem:
@@ -38,14 +45,14 @@ class BaseParser():
         self.file_name = file_name
         self.base_file_name = os.path.basename(self.file_name)
 
-    def parse(self) -> DocumentParserResult:
+    def parse(self, params : DocumentParserParams) -> DocumentParserResult:
         """Get plain text from file"""
         try:
-            return self._do_parse()
+            return self._do_parse(params)
         except Exception as error: # pylint: disable=W0718
             error_message = f'ERROR: file {self.file_name}. Exception: {error} [{type(error)}]'
             return DocumentParserResult(None, None, error_message)
         
     @abstractmethod
-    def _do_parse(self) -> DocumentParserResult:
+    def _do_parse(self, params : DocumentParserParams) -> DocumentParserResult:
         """Get plain text from file"""

@@ -7,12 +7,12 @@
 # https://github.com/TeamMsgExtractor/msg-extractor/tree/master
 import extract_msg 
 
-from core.parsers.base_parser import DocumentContentItem, DocumentParserResult, BaseParser
+from core.parsers.base_parser import DocumentContentItem, DocumentParserResult, BaseParser, DocumentParserParams
 
 class MsgParser(BaseParser):
     """Msg parser class"""
 
-    def _do_parse(self) -> DocumentParserResult:
+    def _do_parse(self, params : DocumentParserParams) -> DocumentParserResult:
         """Get plain text from e-mail"""
 
         msg = extract_msg.openMsg(self.file_name)

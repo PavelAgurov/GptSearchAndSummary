@@ -6,12 +6,12 @@
 
 import pypdf
 
-from core.parsers.base_parser import DocumentContentItem, DocumentParserResult, BaseParser
+from core.parsers.base_parser import DocumentContentItem, DocumentParserResult, BaseParser, DocumentParserParams
 
 class PdfParser(BaseParser):
     """Pdf parser class"""
 
-    def _do_parse(self) -> DocumentParserResult:
+    def _do_parse(self, params : DocumentParserParams) -> DocumentParserResult:
         """Get plain text from pdf"""
 
         content = list[DocumentContentItem]()

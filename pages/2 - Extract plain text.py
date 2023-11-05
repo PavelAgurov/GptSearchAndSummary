@@ -64,6 +64,8 @@ col_f1.markdown('<br/>', unsafe_allow_html=True) # need to center checkbox
 store_as_facts_list = col_f1.checkbox(label="Store as fact list")
 fact_context        = col_f2.text_input(label="Context of facts:", disabled= not store_as_facts_list)
 
+combine_html_headers = st.checkbox(label="Combine HTML headers")
+
 if run_table_extraction:
     st.info('Tables will be extracted from formatted documents if they were created.')
 
@@ -97,6 +99,7 @@ extraction_result = BackEndCore().run_text_extraction(
         run_table_extraction,
         store_as_facts_list,
         fact_context,
+        combine_html_headers,
         show_progress_callback
     )
 )

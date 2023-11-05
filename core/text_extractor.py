@@ -9,7 +9,7 @@ import json
 from dataclasses import dataclass
 from typing import Callable
 
-from core.parsers.base_parser import BaseParser, DocumentParserResult
+from core.parsers.base_parser import BaseParser, DocumentParserResult, DocumentParserParams
 from core.parsers.pdf_parser  import PdfParser
 from core.parsers.msg_parser  import MsgParser
 from core.parsers.docx_parser import DocxParser
@@ -22,6 +22,7 @@ class TextExtractorParams:
     """Parameters for text extraction"""
     override_all  : bool # clean up storage before new run
     show_progress_callback : Callable[[str], None]
+    document_parser_params : DocumentParserParams
 
 class TextExtractor:
     """Converted from source files into plain text"""
@@ -80,7 +81,7 @@ class TextExtractor:
 
             params.show_progress_callback(f'Parse {base_file_name}...')
             parser_instance = parser_type(file)
-            parserResult : DocumentParserResult = parser_instance.parse()
+            parserResult : DocumentParserResult = parser_instance.parse(params.document_parser_params)
             
             if parserResult.error:
                 output_log.append(parserResult.error)
@@ -90,6 +91,9 @@ class TextExtractor:
                 page_file_name = f'{base_file_name}-{content_item.page_number:02d}{self.__PLAIN_TEXT_EXT}'
                 page_content = content_item.page_content
                 page_content = page_content.strip()
+
+                if not page_content:
+                    continue
 
                 # save content
                 with open(os.path.join(document_set_folder, page_file_name), "wt", encoding="utf-8") as f:

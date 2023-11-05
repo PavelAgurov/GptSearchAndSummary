@@ -16,6 +16,7 @@ from core.kt_manager import KnowledgeTreeItem, KnowledgeTree, KnowledgeTreeManag
 from core.table_extractor import TableExtractor, TableExtractorResult
 from core.embedding_manager import EmbeddingManager, EmbeddingItem
 from core.user_query_manager import UserQueryManager
+from core.parsers.base_parser import DocumentParserParams, DocumentParserHTMLParams
 
 import streamlit as st
 
@@ -29,6 +30,7 @@ class BackendTextExtractionParams:
     run_table_extraction    : bool
     store_as_facts_list     : bool # extract facts and store it as plain text
     fact_context            : str  # context to extact facts
+    combine_html_headers    : bool # combine html headers
     show_progress_callback  : Callable[[str], None]
 
 @dataclass
@@ -146,10 +148,16 @@ class BackEndCore():
         table_extractor = self.get_table_extractor()
 
         uploaded_files = source_storage.get_all_files(document_set)
-
         textExtractorParams = TextExtractorParams(
             params.override_all,
-            params.show_progress_callback
+            params.show_progress_callback,
+            DocumentParserParams(
+                DocumentParserHTMLParams(
+                    params.combine_html_headers,
+                    ['header', 'footer', 'breadcrumb'],
+                    ['head', 'script', 'button']
+                )
+            )
         )
 
         # extract plain text

@@ -10,3 +10,4 @@ extract_msg
 dataclasses-json
 streamlit-agraph
 html5lib
+beautifulsoup4

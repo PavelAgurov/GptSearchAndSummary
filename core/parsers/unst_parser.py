@@ -6,12 +6,12 @@
 
 from langchain.document_loaders import UnstructuredFileLoader
 
-from core.parsers.base_parser import DocumentContentItem, DocumentParserResult, BaseParser
+from core.parsers.base_parser import DocumentContentItem, DocumentParserResult, BaseParser, DocumentParserParams
 
 class UnstructuredParser(BaseParser):
     """Parser based on UnstructuredFileLoader"""
 
-    def _do_parse(self) -> DocumentParserResult:
+    def _do_parse(self, params : DocumentParserParams) -> DocumentParserResult:
         """Get plain text from pdf"""
 
         loader = UnstructuredFileLoader(self.file_name, mode= "single")

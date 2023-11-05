@@ -7,12 +7,12 @@
 # https://github.com/python-openxml/python-docx
 import docx
 
-from core.parsers.base_parser import DocumentContentItem, DocumentParserResult, BaseParser
+from core.parsers.base_parser import DocumentContentItem, DocumentParserResult, BaseParser, DocumentParserParams
 
 class DocxParser(BaseParser):
     """Docx parser class"""
 
-    def _do_parse(self) -> DocumentParserResult:
+    def _do_parse(self, params : DocumentParserParams) -> DocumentParserResult:
         """Get plain text from docx"""
 
         content = list[DocumentContentItem]()

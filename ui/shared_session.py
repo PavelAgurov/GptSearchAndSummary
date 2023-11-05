@@ -14,7 +14,6 @@ def get_selected_document_set_index(selected_document_set_list : list[str])-> in
     """Find index of saved selected document str"""
 
     query_params = st.experimental_get_query_params()
-    print(query_params)
     if 'document-set' in query_params:
         st.session_state[SESSION_SELECTED_DOCUMENT_SET] = query_params['document-set'][0]
 
