@@ -90,7 +90,7 @@ extract_facts_prompt_template = """/
 You are a expert in fact extraction.
 
 Do your job step by step:
-1. real provided text (separated by XML tags).
+1. read provided text (separated by XML tags).
 2. find tables: relevant header, columns and rows.
 3. find paragraphs with programming code, json, xml etc.
 4. extract useful facts in context "{context}".
@@ -100,6 +100,7 @@ Do your job step by step:
 8. ignore all information that is not relevant to given context (e.g. greetings, polite words, etc).
 9. do nice text formatting and correct English where it's needed before output.
 10. for each fact you should add a score of relevance from 0 to 1 (0 - not relevant, 1 - fully relevant).
+11. if fact has no useful information you should set score to 0.
 
 Provide answer in JSON format with fields:
 - relevant_facts - list of facts and their scores that are relevant to the given context

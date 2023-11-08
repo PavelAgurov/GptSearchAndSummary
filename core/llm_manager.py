@@ -254,6 +254,9 @@ class LlmManager():
             fact_list = []
             for f in facts_result_json['relevant_facts']:
                 fact_str = str(f["fact"])
+                score = f["score"]
+                if score == 0:
+                    continue
                 fact_str = fact_str.replace('\n\n', '\n')
                 fact_list.append(fact_str)
 
