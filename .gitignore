@@ -18,3 +18,4 @@
 /tests/__pycache__
 /.tiktoken-cache
 /ui/__pycache__
+/core/facts/__pycache__

@@ -17,6 +17,7 @@ from core.table_extractor import TableExtractor, TableExtractorResult
 from core.embedding_manager import EmbeddingManager, EmbeddingItem
 from core.user_query_manager import UserQueryManager
 from core.parsers.base_parser import DocumentParserParams, DocumentParserHTMLParams
+from core.facts.fact_clustering import FactCluster, fact_k_means
 
 import streamlit as st
 
@@ -261,7 +262,7 @@ class BackEndCore():
         llm_manager = self.get_llm_manager()
         file_index = self.get_file_index()
         text_extractor = self.get_text_extractor()
-        embedding_manager = BackEndCore.get_embedding_manager()
+        embedding_manager = self.get_embedding_manager()
 
         fileIndexParams = FileIndexParams(
                 splitter_params= ChunkSplitterParams(
@@ -300,7 +301,7 @@ class BackEndCore():
 
         llm_manager = self.get_llm_manager()
         file_index = self.get_file_index()
-        embedding_manager = BackEndCore.get_embedding_manager()
+        embedding_manager = self.get_embedding_manager()
 
         show_status_callback('Load index...')
         fileIndexMeta = file_index.get_file_index_meta(document_set, index_name)
@@ -396,3 +397,18 @@ class BackEndCore():
         if not table_json or len(table_json) == 0:
             return None
         return table_extractor.get_table_extractor_result_from_json(table_json)
+
+    def get_fact_clusters(self, selected_document_set : str, cluster_count : int, embedding_item : EmbeddingItem) -> list[FactCluster]:
+        """Get fact clusters"""
+        text_extractor = self.get_text_extractor()
+        embedding_manager = self.get_embedding_manager()
+
+        all_fact_files = text_extractor.get_all_facts_file_names(selected_document_set, True)
+
+        full_fact_list = []
+        for fact_file in all_fact_files:
+            facts = text_extractor.get_facts_from_file(selected_document_set, fact_file)
+            full_fact_list.extend(facts)
+        
+        embedding_encode_call = embedding_manager.get_embeddings_encode_call(embedding_item.embedding_type.name)
+        return fact_k_means(full_fact_list, cluster_count, embedding_encode_call)

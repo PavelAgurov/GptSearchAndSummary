@@ -4,18 +4,19 @@
 
 # pylint: disable=C0301,C0103,C0304,C0303,W0611,W0511,R0913,R0402
 
+import os
 from enum import Enum
 from dataclasses import dataclass
-import os
+from typing import Callable
 
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.embeddings import SentenceTransformerEmbeddings
 
 class EmbeddingType(Enum):
     """Types of embeddings"""
-    OPENAI35 = "Open AI Embeddings"
     SBERT    = "SBERT (https://www.sbert.net/)"
     MULTILP  = "paraphrase-multilingual-MiniLM-L12-v2" 
+    OPENAI35 = "Open AI Embeddings"
 
 @dataclass
 class EmbeddingItem:
@@ -43,12 +44,6 @@ class EmbeddingManager():
         """List of available embeddings"""
         return [
                 EmbeddingItem(
-                    EmbeddingType.OPENAI35,
-                    "https://api.python.langchain.com/en/latest/embeddings/langchain.embeddings.openai.OpenAIEmbeddings.html",
-                    "OpenAI gpt-3.5-turbo embedding, not free",
-                    0.76
-                ),
-                EmbeddingItem(
                     EmbeddingType.SBERT,
                     "https://www.sbert.net/",
                     "Sentence Transformers (https://www.sbert.net/), Free",
@@ -59,6 +54,12 @@ class EmbeddingManager():
                     "https://huggingface.co/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
                     "Sentence Transformers - paraphrase multilingual, Free",
                     0.35
+                ),
+                EmbeddingItem(
+                    EmbeddingType.OPENAI35,
+                    "https://api.python.langchain.com/en/latest/embeddings/langchain.embeddings.openai.OpenAIEmbeddings.html",
+                    "OpenAI gpt-3.5-turbo embedding, not free",
+                    0.76
                 )
         ]
 
@@ -84,3 +85,16 @@ class EmbeddingManager():
         
         raise LlmEmbeddingError(f'Unsupported embedding {embedding_name}')
 
+    def get_embeddings_encode_call(self, embedding_name : EmbeddingType) -> Callable[..., list[list[float]]]:
+        """Get encode method for embedding"""
+        embedding = self.get_embeddings(embedding_name)
+
+        embed_documents_call = getattr(embedding, "embed_documents", None)
+        if callable(embed_documents_call):
+            return embed_documents_call
+        
+        encode_call = getattr(embedding, "encode", None)
+        if callable(encode_call):
+            return encode_call
+        
+        raise LlmEmbeddingError(embedding_name)
