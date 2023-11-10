@@ -14,6 +14,7 @@ from langchain.cache import SQLiteCache
 from langchain.callbacks import get_openai_callback
 from langchain.chat_models import ChatOpenAI
 from langchain.chains import LLMChain
+from langchain.text_splitter import TokenTextSplitter
 
 import core.llm.prompts as prompts
 from core.llm.llm_utils import get_llm_json, parse_llm_xml
@@ -56,7 +57,7 @@ class LlmFactsResult:
     """LLM facts result"""
     fact_list     : list[str]
     token_used    : int
-    error         : str
+    error_list    : list[str]
 
 @dataclass
 class LlmTableResult:
@@ -155,7 +156,7 @@ class LlmManager():
             )
 
         refine_chain = RefineAnswerChain(self.llm_answer)
-        return refine_chain.run(question, chunk_list, False)
+        return refine_chain.run(question, chunk_list, True)
 
     def build_knowledge_tree(self, input_str : str) -> LlmKnowledgeTree:
         """Build knowledge tree"""
@@ -224,43 +225,52 @@ class LlmManager():
 
     def get_fact_list(self, input_text : str, context : str) -> LlmFactsResult:
         """Run LLM fact extractor"""
+        max_tokens = 1500
+
         if not self.facts_llm:
             self.facts_llm = ChatOpenAI(
                     openai_api_key= self.__get_api_key(),
                     model_name  = self._BASE_MODEL_NAME,
                     temperature = 0,
-                    max_tokens  = 1500
+                    max_tokens  = max_tokens
             )
             self.facts_prompt = PromptTemplate.from_template(prompts.extract_facts_prompt_template)
             self.facts_chain  = self.facts_prompt | self.facts_llm | StrOutputParser()
 
-        facts_result = ''
+        text_splitter = TokenTextSplitter(chunk_size=max_tokens-100, chunk_overlap=20)
+        texts = text_splitter.split_text(input_text)
+
+        fact_list  = []
+        error_list = []
         total_tokens = 0
-        try:
-            with get_openai_callback() as llm_callback:
-                facts_result = self.facts_chain.invoke({
-                        "input_text" : input_text,
-                        "context"    : context
-                    })
-            total_tokens = llm_callback.total_tokens
-        except Exception as error_llm: # pylint: disable=W0718
-            return LlmFactsResult('', total_tokens, error_llm)
+        for chunk_text in texts:
+            facts_result = ''
+            try:
+                with get_openai_callback() as llm_callback:
+                    facts_result = self.facts_chain.invoke({
+                            "input_text" : chunk_text,
+                            "context"    : context
+                        })
+                total_tokens += llm_callback.total_tokens
+            except Exception as error_llm: # pylint: disable=W0718
+                error_list.append(error_llm)
+                continue
 
-        print(f'FACTS: {facts_result}')
+            print(f'FACTS: {facts_result}')
 
-        try:
-            facts_result_json = get_llm_json(facts_result)
+            try:
+                facts_result_json = get_llm_json(facts_result)
 
-            fact_list = []
-            for f in facts_result_json['relevant_facts']:
-                fact_str = str(f["fact"])
-                score = f["score"]
-                if score == 0:
-                    continue
-                fact_str = fact_str.replace('\n\n', '\n')
-                fact_list.append(fact_str)
+                for f in facts_result_json['relevant_facts']:
+                    fact_str = str(f["fact"])
+                    score = f["score"]
+                    if score == 0:
+                        continue
+                    fact_str = fact_str.replace('\n\n', '\n')
+                    fact_list.append(fact_str)
 
-            return LlmFactsResult(fact_list, total_tokens, None)
-        except Exception as error_json: # pylint: disable=W0718
-            return LlmFactsResult('', total_tokens, error_json)
+            except Exception as error_json: # pylint: disable=W0718
+                error_list.append(error_json)
+
+        return LlmFactsResult(fact_list, total_tokens, error_list)
 

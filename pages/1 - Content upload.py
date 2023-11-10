@@ -3,7 +3,7 @@
 """
 # pylint: disable=C0301,C0103,C0304,C0303,W0611
 
-import urllib
+import requests
 import streamlit as st
 
 from utils_streamlit import streamlit_hack_remove_top_space, hide_footer
@@ -118,8 +118,20 @@ if content_type == CONTENT_FROM_URL_HTML:
                                 .replace('?', '-')\
                                 .strip('-') \
                                 + '.html'
-    with urllib.request.urlopen(new_uploaded_url) as f:
-        html = f.read()
-    source_index.save_file(selected_document_set, file_name_from_url, html)
-    st.session_state[SESSION_UPLOADED_STATUS] = f'Content loaded into {file_name_from_url} file. {len(html)}  bytes.'
+    
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36",
+        "Accept-Language": "en-US,en;q=0.5",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
+    }    
+
+    response = requests.get(new_uploaded_url, headers=headers, timeout=100)
+    if response.status_code == 200:
+        html = response.text
+        source_index.save_file(selected_document_set, file_name_from_url, html)
+        st.session_state[SESSION_UPLOADED_STATUS] = f'Content loaded into {file_name_from_url} file. {len(html)}  bytes.'
+    else:
+        st.session_state[SESSION_UPLOADED_STATUS] = f'Error loading content. Code: {response.status_code}.'
     st.rerun()

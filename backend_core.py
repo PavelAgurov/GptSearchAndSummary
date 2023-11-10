@@ -200,8 +200,9 @@ class BackEndCore():
                 params.show_progress_callback(f'Extract facts from {plain_text_file_name} ({index+1}/{len(plain_text_files)})...')
                 plain_text = text_extractor.get_input_by_file_name(document_set, plain_text_file_name)
                 fact_list_result : LlmFactsResult = llm_manager.get_fact_list(plain_text, params.fact_context)
-                if fact_list_result.error:
-                    output_log.append(f'ERROR. File={plain_text_file_name}. {fact_list_result.error}')
+                if fact_list_result.error_list:
+                    error_str = "\n".join(fact_list_result.error_list)
+                    output_log.append(f'ERROR. File={plain_text_file_name}. {error_str}')
                     continue
                 text_extractor.save_fact_text(document_set, plain_text_file_name, fact_list_result.fact_list)
 
@@ -343,8 +344,11 @@ class BackEndCore():
 
     def build_answer(self, question : str, chunk_list : list[BackendChunk]) -> str:
         """Build LLM answer"""
+        print('Build summary by LLM...')
         llm_manager = self.get_llm_manager()
         answer_result = llm_manager.build_answer(question, [c.content for c in chunk_list])
+        print(answer_result.steps)
+        print(answer_result.error)
         return answer_result.answer
 
     def build_knowledge_tree(

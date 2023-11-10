@@ -107,4 +107,4 @@ class UserQueryManager:
     def get_query_history_query(self, document_set: str, limit : int = 0) -> list[str]:
         """Get query histoty"""
         result = self.get_query_history(document_set, limit)
-        return [q.query for q in result]
+        return list(set([q.query for q in result]))

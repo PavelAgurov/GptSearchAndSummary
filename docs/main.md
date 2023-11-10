@@ -8,9 +8,9 @@ This page allows to create Document set. All other operations will be in scope o
 
 Document sets are stored in file `.document-set\document-set.json`
 
-Default Document set can be provided by parameter `document-set` in URL:
+Default Document set can be provided by parameter `document_set` in URL:
 
-```http://localhost:8501/?document-set=test```
+```http://localhost:8501/?document_set=test```
 
 ### 1. Upload content
 

@@ -109,6 +109,10 @@ if not query:
 if not run_button:
     st.stop()
 
+if not index_name:
+    show_status_callback('No selected index')
+    st.stop()
+
 score_threshold = threshold
 if score_threshold == 0:
     score_threshold = None

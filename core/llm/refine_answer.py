@@ -12,7 +12,7 @@ from langchain.callbacks import get_openai_callback
 from core.llm.llm_utils import get_fixed_json
 
 answer_initial_prompt_template = """\
-Write a concise answer to the question (delimited with XML tags) from the provided text (delimited with XML tags).
+You are text reader. Write a concise answer to the question (delimited with XML tags) from the provided part of text (delimited with XML tags).
 If text has no answer to the question - say "No answer".
 Please provide result in JSON format:
 {{
@@ -23,9 +23,9 @@ Please provide result in JSON format:
 {question}
 </question>
 
-<text>
-{text}
-</text>
+<input_text>
+{input_text}
+</input_text>
 """
 
 answer_combine_prompt_template = """\
@@ -66,7 +66,7 @@ class RefineAnswerChain():
     refine_combine_chain : LLMChain
     
     def __init__(self, llm):
-        refine_initial_prompt = PromptTemplate(template= answer_initial_prompt_template, input_variables=["question", "text"])
+        refine_initial_prompt = PromptTemplate(template= answer_initial_prompt_template, input_variables=["question", "input_text"])
         self.refine_initial_chain = LLMChain(llm= llm, prompt= refine_initial_prompt)
         refine_combine_prompt = PromptTemplate(template= answer_combine_prompt_template, input_variables=["question", "existing_answer", "more_context"])
         self.refine_combine_chain = LLMChain(llm= llm, prompt= refine_combine_prompt)
@@ -84,9 +84,10 @@ class RefineAnswerChain():
         steps = []
 
         try:
+            steps = self.log(steps, enable_logger, f'question={question}')
             steps = self.log(steps, enable_logger, 'Process doc #1')
             with get_openai_callback() as cb:
-                answer_result = self.refine_initial_chain.run(question = question, text = docs[0])
+                answer_result = self.refine_initial_chain.run(question = question, input_text = docs[0])
             tokens_used += cb.total_tokens
             steps = self.log(steps, enable_logger, answer_result)
             steps = self.log(steps, enable_logger, f'Doc count {len(docs)}')
