@@ -11,3 +11,4 @@ dataclasses-json
 streamlit-agraph
 html5lib
 beautifulsoup4
+pydantic

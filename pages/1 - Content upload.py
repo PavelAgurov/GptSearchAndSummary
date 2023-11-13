@@ -9,6 +9,7 @@ import streamlit as st
 from utils_streamlit import streamlit_hack_remove_top_space, hide_footer
 from backend_core import BackEndCore
 from ui.shared_session import set_selected_document_set, get_selected_document_set_index
+from utils.app_logger import init_streamlit_logger
 
 # ------------------------------- Consts
 
@@ -26,6 +27,7 @@ if SESSION_UPLOADED_STATUS not in st.session_state:
 document_set_manager = BackEndCore.get_document_set_manager()
 source_index = BackEndCore.get_source_storage()
 
+init_streamlit_logger()
 # ------------------------------- UI Setup
 PAGE_NAME = "Content Upload"
 st.set_page_config(page_title= PAGE_NAME, layout="wide")

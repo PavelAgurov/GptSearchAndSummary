@@ -7,6 +7,9 @@ import streamlit as st
 
 from utils_streamlit import streamlit_hack_remove_top_space
 from utils.doc_helper import DocHelper
+from utils.app_logger import init_streamlit_logger
+
+init_streamlit_logger()
 
 # ------------------------------- UI
 st.set_page_config(page_title= "Demo POC", layout="wide")

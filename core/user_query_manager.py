@@ -99,12 +99,27 @@ class UserQueryManager:
                 answer = line.removeprefix(self.__ANSWER_PREFIX).strip('\n')
                 continue
 
-        if limit > 0 and len(result) < limit:
+        if limit == 0 or len(result) < limit:
             result.append(UserQueryItem(query, answer))
 
+        result.reverse()
         return result
    
     def get_query_history_query(self, document_set: str, limit : int = 0) -> list[str]:
         """Get query histoty"""
-        result = self.get_query_history(document_set, limit)
-        return list(set([q.query for q in result]))
+        result_queries = self.get_query_history(document_set, 0)
+
+        seen = set()
+        result = []
+
+        for item in result_queries:
+            # Check if the item has been seen before
+            if item.query not in seen:
+                # If not, add it to the unique_result list and the set
+                result.append(item.query)
+                seen.add(item.query)
+
+        if limit > 0:
+            result = result[:limit]
+        return result
+

@@ -9,6 +9,7 @@ from utils_streamlit import streamlit_hack_remove_top_space, hide_footer
 from backend_core import BackEndCore
 from ui.dialog_storage import DialogStorage, DialogRole
 from ui.shared_session import set_selected_document_set, get_selected_document_set_index
+from utils.app_logger import init_streamlit_logger
 
 # ------------------------------- Session
 
@@ -21,6 +22,7 @@ dialog_storage = st.session_state[SESSION_DIALOG_STORAGE]
 
 document_set_manager = BackEndCore.get_document_set_manager()
 
+init_streamlit_logger()
 # ------------------------------- UI Setup
 PAGE_NAME = "Summary and Q&A"
 st.set_page_config(page_title= PAGE_NAME, layout="wide")

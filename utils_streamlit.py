@@ -1,9 +1,14 @@
+"""
+    Utils for streamlit
+"""
+
 import streamlit as st
 import streamlit.components.v1 as components
 
 # https://discuss.streamlit.io/t/prevent-st-text-input-from-triggering-callback-when-losing-focus/37103/3
 
 def streamlit_hack_disable_textarea_submit():
+    """Do not submit TextArea component when lost focus"""
     components.html(
             """
         <script>
@@ -31,6 +36,7 @@ def streamlit_hack_disable_textarea_submit():
         )
 
 def streamlit_hack_remove_top_space():
+    """Remove top space of streamlit windos"""
     st.markdown("""
         <style>
                .block-container {
@@ -48,6 +54,7 @@ def streamlit_hack_remove_top_space():
         """, unsafe_allow_html=True)
 
 def hide_footer():
+    """Hide footer"""
     hide_streamlit_style = """
             <style>
             #MainMenu {visibility: hidden;}

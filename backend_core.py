@@ -1,10 +1,11 @@
 """
     Main core
 """
-# pylint: disable=C0301,C0103,C0304,C0303,W0611,C0411
+# pylint: disable=C0301,C0103,C0304,C0303,W0611,C0411,W1203
 
 from dataclasses import dataclass
 from typing import Callable
+import logging
 
 from core.file_indexing import FileIndex, FileIndexParams
 from core.source_storage import SourceStorage
@@ -20,6 +21,8 @@ from core.parsers.base_parser import DocumentParserParams, DocumentParserHTMLPar
 from core.facts.fact_clustering import FactCluster, fact_k_means
 
 import streamlit as st
+
+logger : logging.Logger = logging.getLogger()
 
 IN_MEMORY = False
 
@@ -102,7 +105,8 @@ class BackEndCore():
     def get_llm_manager(cls) -> LlmManager:
         """Get LLM Manager"""
         if cls._SESSION_LLM not in st.session_state:
-            st.session_state[cls._SESSION_LLM] = LlmManager()
+            all_secrets = {s[0]:s[1] for s in st.secrets.items()}
+            st.session_state[cls._SESSION_LLM] = LlmManager(all_secrets)
         return st.session_state[cls._SESSION_LLM]
 
     @classmethod
@@ -344,11 +348,11 @@ class BackEndCore():
 
     def build_answer(self, question : str, chunk_list : list[BackendChunk]) -> str:
         """Build LLM answer"""
-        print('Build summary by LLM...')
+        logger.info('Build summary by LLM...')
         llm_manager = self.get_llm_manager()
         answer_result = llm_manager.build_answer(question, [c.content for c in chunk_list])
-        print(answer_result.steps)
-        print(answer_result.error)
+        if answer_result.error:
+            return answer_result.error
         return answer_result.answer
 
     def build_knowledge_tree(
@@ -385,7 +389,7 @@ class BackEndCore():
                         input_item[1]
                     ))
             else:
-                print(f'ERROR LLM ={kt_list.error}')
+                logger.error(f'ERROR LLM ={kt_list.error}')
         result = KnowledgeTree(triples)
         show_progress_callback('Save ...')
         kt_manager.save(name, result)

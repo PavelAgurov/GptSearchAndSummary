@@ -1,32 +1,36 @@
 """
     Refine answer
 """
-# pylint: disable=C0301,C0103,C0304,C0303,W0611,W0511,R0913,R0402
+# pylint: disable=C0301,C0103,C0304,C0303,W0611,W0511,R0913,R0402,W1203
 
+import logging
+import traceback
 from dataclasses import dataclass
-import json
+from pydantic import BaseModel, Field
+
+from langchain.callbacks import get_openai_callback
+from langchain.utils.openai_functions import convert_pydantic_to_openai_function
+from langchain.prompts import ChatPromptTemplate
 from langchain.prompts.prompt import PromptTemplate
 from langchain.chains import LLMChain
-from langchain.callbacks import get_openai_callback
 
-from core.llm.llm_utils import get_fixed_json
+from core.llm.json_parser import JsonFixOutputFunctionsParser, JsonFixLLMOutputParser
 
-answer_initial_prompt_template = """\
-You are text reader. Write a concise answer to the question (delimited with XML tags) from the provided part of text (delimited with XML tags).
-If text has no answer to the question - say "No answer".
-Please provide result in JSON format:
-{{
-    "answer": "answer here"
-}}
+logger : logging.Logger = logging.getLogger()
 
-<question>
-{question}
-</question>
+NO_ANSWER_STR = 'There is no answer in the information provided'
 
-<input_text>
-{input_text}
-</input_text>
+class ExtractedAnswer(BaseModel):
+    """Extracted answer if there is answer in text provided text."""
+    answer  : str   = Field(description="Direct answer to the provided question")
+    score   : float = Field(description="Score of relevance between question and answer")
+
+extract_answer_system_prompt = """\
+Find the answer to the question from the provided text. DO NOT MAKE UP ANSWER, use only provided information. 
+If there is no answer in the provided text - do not guess.
 """
+
+extract_answer_params = "<question>{question}</question><input_text>{input_text}</input_text>"
 
 answer_combine_prompt_template = """\
 Your job is to produce a final answer. We have provided an existing answer up to a certain point (delimited with XML tags).
@@ -57,55 +61,80 @@ class RefineAnswerResult():
     """Result of refine"""
     answer      : str
     tokens_used : int
-    error       : str = None
-    steps       : [] = None
+    error       : bool
 
 class RefineAnswerChain():
     """Refine chain"""
-    refine_initial_chain : LLMChain
-    refine_combine_chain : LLMChain
     
-    def __init__(self, llm):
-        refine_initial_prompt = PromptTemplate(template= answer_initial_prompt_template, input_variables=["question", "input_text"])
-        self.refine_initial_chain = LLMChain(llm= llm, prompt= refine_initial_prompt)
-        refine_combine_prompt = PromptTemplate(template= answer_combine_prompt_template, input_variables=["question", "existing_answer", "more_context"])
-        self.refine_combine_chain = LLMChain(llm= llm, prompt= refine_combine_prompt)
+    openai_api_type : str
 
-    def log(self, steps, include_steps, step_message):
-        """Add log item"""
-        if include_steps:
-            steps.append(step_message)
-        return steps
+    def __init__(self, llm, openai_api_type : str):
+        self.openai_api_type = openai_api_type
+        extraction_functions = [convert_pydantic_to_openai_function(ExtractedAnswer)]
 
-    def run(self, question : str, docs : list, enable_logger : bool = False) -> RefineAnswerResult:
+        if self.openai_api_type == 'openai':
+            extraction_model = llm.bind(functions=extraction_functions, function_call="auto")
+            prompt = ChatPromptTemplate.from_messages([
+                ("system", extract_answer_system_prompt),
+                ("human" , extract_answer_params)
+            ])
+            self.extraction_chain = prompt | extraction_model | JsonFixOutputFunctionsParser()
+
+        if self.openai_api_type == 'azure':
+            extract_answer_system_prompt_old_style = extract_answer_system_prompt + \
+                "\nPlease provide result based on JSON schema:\n" + \
+                str(extraction_functions).replace('{', '{{').replace('}', '}}').replace("'", "\"") + \
+                extract_answer_params
+            prompt = PromptTemplate(template= extract_answer_system_prompt_old_style, input_variables=["question", "input_text"])
+            self.extraction_chain  = LLMChain(llm= llm, prompt= prompt, output_parser = JsonFixLLMOutputParser(function_name = 'ExtractedAnswer'))
+
+        # refine_initial_prompt = PromptTemplate(template= answer_initial_prompt_template, input_variables=["question", "input_text"])
+        # self.refine_initial_chain = LLMChain(llm= llm, prompt= refine_initial_prompt)
+        # refine_combine_prompt = PromptTemplate(template= answer_combine_prompt_template, input_variables=["question", "existing_answer", "more_context"])
+        # self.refine_combine_chain = LLMChain(llm= llm, prompt= refine_combine_prompt)
+
+    def run(self, question : str, docs : list) -> RefineAnswerResult:
         """Run refine"""
         tokens_used = 0
-        answer = ""
-        steps = []
 
+        logger.info(f"Run answer extraction question: [{question}]")
         try:
-            steps = self.log(steps, enable_logger, f'question={question}')
-            steps = self.log(steps, enable_logger, 'Process doc #1')
+            logger.debug('Process doc #1')
             with get_openai_callback() as cb:
-                answer_result = self.refine_initial_chain.run(question = question, input_text = docs[0])
+                if self.openai_api_type == 'openai':
+                    answer_result = self.extraction_chain.invoke({"question": question, "input_text" : docs[0]})
+                if self.openai_api_type == 'azure':
+                    answer_result = self.extraction_chain.run(question = question, input_text = docs[0])
             tokens_used += cb.total_tokens
-            steps = self.log(steps, enable_logger, answer_result)
-            steps = self.log(steps, enable_logger, f'Doc count {len(docs)}')
-            answer_json = json.loads(get_fixed_json(answer_result))
-            answer = answer_json["answer"]
 
-            for index, doc in enumerate(docs[1:]):
-                steps = self.log(steps, enable_logger, f'Process doc #{index+2}')
-                with get_openai_callback() as cb:
-                    refine_result = self.refine_combine_chain.run(question = question, existing_answer = answer, more_context = doc)
-                tokens_used += cb.total_tokens
-                steps = self.log(steps, enable_logger, refine_result)
-                refined_json = json.loads(get_fixed_json(refine_result))
-                refined_useful = not refined_json["not_useful"]
-                if refined_useful:
-                    answer = refined_json["refined_answer"]
+            logger.debug(answer_result)
+
+            if answer_result is None:
+                return RefineAnswerResult(NO_ANSWER_STR, tokens_used, False)
+
+            if isinstance(answer_result, str):
+                return RefineAnswerResult(answer_result, tokens_used, False)
+
+            extracted_answer = ExtractedAnswer(**answer_result)
+            logger.info(f'extracted_answer={extracted_answer.answer} [{extracted_answer.score}]')
+
+            answer = extracted_answer.answer
+            if not answer:
+                answer = NO_ANSWER_STR
+
+            # for index, doc in enumerate(docs[1:]):
+            #     steps = self.log(steps, enable_logger, f'Process doc #{index+2}')
+            #     with get_openai_callback() as cb:
+            #         refine_result = self.refine_combine_chain.run(question = question, existing_answer = answer, more_context = doc)
+            #     tokens_used += cb.total_tokens
+            #     steps = self.log(steps, enable_logger, refine_result)
+            #     refined_json = json.loads(get_fixed_json(refine_result))
+            #     refined_useful = not refined_json["not_useful"]
+            #     if refined_useful:
+            #         answer = refined_json["refined_answer"]
             
-            return RefineAnswerResult(answer, tokens_used, steps = steps)
+            return RefineAnswerResult(answer, tokens_used, False)
         except Exception as error: # pylint: disable=W0718
-            steps = self.log(steps, enable_logger, error)
-            return RefineAnswerResult(answer, tokens_used, error= error, steps = steps)
+            logger.exception(error)
+            logger.error(traceback.format_exc())
+            return RefineAnswerResult("", tokens_used, True)

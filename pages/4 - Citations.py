@@ -1,12 +1,14 @@
 """
     Citations page
 """
-# pylint: disable=C0301,C0103,C0303,C0304, W0611
+# pylint: disable=C0301,C0103,C0303,C0304,W0611,C0411
 
 import streamlit as st
+
 from utils_streamlit import streamlit_hack_remove_top_space, hide_footer
 from backend_core import BackEndCore
 from ui.shared_session import set_selected_document_set, get_selected_document_set_index
+from utils.app_logger import init_streamlit_logger
 
 # ------------------------------- Const
 QUERY_MODE_NEW = "New query"
@@ -18,6 +20,7 @@ document_set_manager = BackEndCore.get_document_set_manager()
 file_index = BackEndCore.get_file_index()
 user_query_manager = BackEndCore.get_user_query_manager()
 
+init_streamlit_logger()
 # ------------------------------- UI Setup
 PAGE_NAME = "Citations"
 st.set_page_config(page_title= PAGE_NAME, layout="wide")
@@ -85,7 +88,7 @@ query_mode = st.radio(
 if query_mode == QUERY_MODE_NEW:
     query = st.text_input(label="Query:")
 if query_mode == QUERY_MODE_FROM_HISOTRY:
-    query = st.selectbox(label="Saved query:", options= user_query_manager.get_query_history_query(selected_document_set, 10))
+    query = st.selectbox(label="Saved query:", options= user_query_manager.get_query_history_query(selected_document_set, 0))
 
 col21, col22 = st.columns(2)
 run_button = col21.button(label="Run")
