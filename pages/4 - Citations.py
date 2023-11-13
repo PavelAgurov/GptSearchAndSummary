@@ -19,6 +19,7 @@ QUERY_MODE_FROM_HISOTRY = "Saved query"
 document_set_manager = BackEndCore.get_document_set_manager()
 file_index = BackEndCore.get_file_index()
 user_query_manager = BackEndCore.get_user_query_manager()
+embedding_manager = BackEndCore.get_embedding_manager()
 
 init_streamlit_logger()
 # ------------------------------- UI Setup
@@ -60,8 +61,12 @@ if index_name:
                 Chunk min={splitter_params.chunk_min_tokens}, \
                 chunk size={splitter_params.tokens_per_chunk},\
                 overlap={splitter_params.chunk_overlap_tokens}.'
+        
+        embedding_information = embedding_manager.get_embedding_information(index_info.embedding_name)
+        if embedding_information and embedding_information.default_threshold > 0:
+            index_info_str += f' Recommended Default threshold for similarity: {embedding_information.default_threshold}.'
         if index_info.default_threshold > 0:
-            index_info_str += f' Recommended Default threshold for similarity: {index_info.default_threshold}.'
+            index_info_str += f' Saved Default threshold for similarity: {index_info.default_threshold}.'
         st.info(index_info_str)
     else:
         st.info(index_info.error)
@@ -69,7 +74,11 @@ if index_name:
 
 col11, col12 = st.columns(2)
 sample_count = col11.number_input(label="Count of samples:", min_value=1, max_value=100, value=3)
-threshold = col12.number_input(label="Similarity threshold:", min_value=0.00, max_value=1.00, value=0.50, step=0.01, format="%.2f")
+
+default_threshold = 0.50
+if index_info and index_info.default_threshold:
+    default_threshold = index_info.default_threshold
+threshold = col12.number_input(label="Similarity threshold:", min_value=0.00, max_value=1.00, value=default_threshold, step=0.01, format="%.2f")
 
 col41, col42, _ = st.columns([20, 20, 80])
 add_llm_score = col41.checkbox(label="Add LLM score", value=False)

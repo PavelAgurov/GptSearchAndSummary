@@ -47,7 +47,7 @@ class EmbeddingManager():
                     EmbeddingType.SBERT,
                     "https://www.sbert.net/",
                     "Sentence Transformers (https://www.sbert.net/), Free",
-                    0.76
+                    0.20
                 ),
                 EmbeddingItem(
                     EmbeddingType.MULTILP,
@@ -62,6 +62,11 @@ class EmbeddingManager():
                     0.76
                 )
         ]
+    
+    def get_embedding_information(self, embedding_name : str) -> EmbeddingItem:
+        """Get embedding information"""
+        return [e for e in self.get_embedding_information_list() if e.embedding_type.name == embedding_name][0]
+
 
     def get_embeddings(self, embedding_name : EmbeddingType)-> (OpenAIEmbeddings | SentenceTransformerEmbeddings):
         """Embeddings"""
