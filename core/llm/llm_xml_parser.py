@@ -1,12 +1,8 @@
 """
-    LLM Utils
+    LLM XML Parser
 """
 
 # pylint: disable=C0305,C0303
-
-import json
-import traceback
-from core.llm.json_parser import get_fixed_json
 
 def parse_llm_xml(text : str, variables : list[str]) -> dict[str, str]:
     """Parse XML for LLM"""
@@ -32,15 +28,5 @@ def parse_llm_xml(text : str, variables : list[str]) -> dict[str, str]:
         result[var_name] = var_value
     return result
 
-def get_llm_json(text : str) -> any:
-    """Get fixed LLM Json"""
-    try:
-        return json.loads(get_fixed_json(text))
-    except Exception as error: # pylint: disable=W0718
-        print('----------------------')
-        print(f'Error: {error}.')
-        print(f'Track: {traceback.format_exc()}')
-        print(f'JSON: {text}')
-        print('----------------------')
-        raise error
+
 

@@ -9,7 +9,7 @@ from langchain.prompts.prompt import PromptTemplate
 from langchain.chains import LLMChain
 from langchain.callbacks import get_openai_callback
 
-from core.llm.llm_utils import get_fixed_json
+from core.llm.llm_json_parser import get_llm_json
 
 refine_initial_prompt_template = """\
 Write a concise summary of the text (delimited with XML tags).
@@ -80,7 +80,7 @@ class RefineSummaryChain():
             tokens_used += cb.total_tokens
             steps = self.log(steps, enable_logger, summary_result)
             steps = self.log(steps, enable_logger, f'Doc count {len(docs)}')
-            summary_json = json.loads(get_fixed_json(summary_result))
+            summary_json = get_llm_json(summary_result)
             summary = summary_json["summary"]
 
             for index, doc in enumerate(docs[1:]):
@@ -89,7 +89,7 @@ class RefineSummaryChain():
                     refine_result = self.refine_combine_chain.run(existing_summary = summary, more_context = doc)
                 tokens_used += cb.total_tokens
                 steps = self.log(steps, enable_logger, refine_result)
-                refined_json = json.loads(get_fixed_json(refine_result))
+                refined_json = get_llm_json(refine_result)
                 refined_useful = not refined_json["not_useful"]
                 if refined_useful:
                     summary = refined_json["refined_summary"]

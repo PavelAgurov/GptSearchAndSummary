@@ -18,7 +18,8 @@ from langchain.chains import LLMChain
 from langchain.text_splitter import TokenTextSplitter
 
 import core.llm.prompts as prompts
-from core.llm.llm_utils import get_llm_json, parse_llm_xml
+from core.llm.llm_json_parser import get_llm_json
+from core.llm.llm_xml_parser import parse_llm_xml
 from core.llm.refine_answer import RefineAnswerChain, RefineAnswerResult
 
 logger : logging.Logger = logging.getLogger()
@@ -228,7 +229,7 @@ class LlmManager():
 
         if not self.llm_answer:
             self.llm_answer = self.create_llm(max_tokens= 1000)
-        refine_chain = RefineAnswerChain(self.llm_answer, self.openai_api_type)
+        refine_chain = RefineAnswerChain(self.llm_answer)
         return refine_chain.run(question, chunk_list)
 
     def build_knowledge_tree(self, input_str : str) -> LlmKnowledgeTree:

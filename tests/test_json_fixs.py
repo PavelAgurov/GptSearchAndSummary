@@ -8,7 +8,7 @@
 import pytest
 import json
 
-import llm_utils as utils
+import llm_json_parser as utils
 
 bad_json = """
 { "topics":[ 

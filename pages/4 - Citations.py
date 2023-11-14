@@ -52,6 +52,7 @@ index_name = st.selectbox(
     label_visibility="visible"
 )
 
+index_info = None
 if index_name:
     index_info = file_index.get_file_index_meta(selected_document_set, index_name)
     if not index_info.error:
