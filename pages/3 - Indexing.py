@@ -9,6 +9,7 @@ from utils_streamlit import streamlit_hack_remove_top_space, hide_footer
 from backend_core import BackEndCore, BackendFileIndexingParams
 from ui.shared_session import set_selected_document_set, get_selected_document_set_index
 from utils.app_logger import init_streamlit_logger
+from core.parsers.chunk_splitters.base_splitter import ChunkSplitterMode
 
 CREATE_MODE_NEW = "New"
 CREATE_MODE_EXISTED = "Existed"
@@ -57,11 +58,17 @@ embedding_item = st.selectbox(
 
 st.info(f'{embedding_item.description}. Recommended default_threshold: {embedding_item.default_threshold}')
 
-use_formatted = st.checkbox(label="Use formatted text where possible")
+use_formatted  = st.checkbox(label="Use formatted text where possible")
+
+selected_chunk_splitter_mode = st.selectbox(
+        label="Chunk splitter mode", 
+        options= list(ChunkSplitterMode),
+        format_func= lambda m: m.value
+)
 
 col1 , col2, col3 = st.columns(3)
 chunk_min_chars      = col1.number_input(label="Chunk min (tokens)", min_value=1, max_value=10000, value= 20)
-chunk_size_tokens    = col2.number_input(label="Chunk size (tokens)", min_value=100, max_value=10000, value= 100)
+chunk_size_tokens    = col2.number_input(label="Chunk size (tokens)", min_value=1, max_value=10000, value= 100)
 chunk_overlap_tokens = col3.number_input(label="Сhunk overlap (tokens)", min_value=0, max_value=1000, value= 0)
 
 st.info("Index will be created from scratch!")
@@ -128,7 +135,8 @@ indexing_result = BackEndCore().run_file_indexing(
         chunk_min_chars,
         chunk_size_tokens,
         chunk_overlap_tokens,
-        use_formatted
+        use_formatted,
+        selected_chunk_splitter_mode
     )
 )
 indexing_result_str = '<br/>'.join(indexing_result)

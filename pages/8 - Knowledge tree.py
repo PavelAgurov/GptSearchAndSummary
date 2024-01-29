@@ -84,7 +84,7 @@ if create_tree_mode in [MODE_CREATE_NEW, MODE_REBUILD, MODE_APPEND]:
     col_b_1, col_b_2 = st.columns([30, 80])
     build_tree_mode = col_b_1.radio(label="Build mode", options=[MODE_BUILD_ALL, MODE_BUILD_SELECTED], horizontal=True)
     if build_tree_mode == MODE_BUILD_ALL:
-        max_limit = col_b_2.number_input(label="Count of files to process (0 - all):", min_value=0, max_value=len(input_text_files), value=10)
+        max_limit = col_b_2.number_input(label="Count of files to process (0 - all):", min_value=0, max_value=len(input_text_files), value=min(len(input_text_files), 10))
     if build_tree_mode == MODE_BUILD_SELECTED:
         selected_input = col_b_2.text_input(label="File list (separated by ';'):")
 

@@ -5,6 +5,7 @@
 
 import os
 import shutil
+import logging
 from dataclasses import dataclass
 from typing import Optional
 from dataclasses_json import dataclass_json
@@ -15,14 +16,22 @@ from langchain.embeddings.base import Embeddings
 from langchain.vectorstores import Qdrant
 from langchain.docstore.document import Document
 
-from core.parsers.chunk_splitters.base_splitter import ChunkSplitterParams
+from core.parsers.chunk_splitters.base_splitter import ChunkSplitterParams, ChunkSplitterMode
 from core.parsers.chunk_splitters.token_splitter import TokenChunkSplitter
+from core.parsers.chunk_splitters.fact_splitter import FactChunkSplitter
+from core.parsers.chunk_splitters.faq_splitter import FAQChunkSplitter
+
+logger : logging.Logger = logging.getLogger()
+
+class FileIndexingError(Exception):
+    """File indexing related exception"""
 
 @dataclass_json
 @dataclass
 class FileIndexParams:
     """Parameters for indexing"""
-    splitter_params : ChunkSplitterParams
+    splitter_params     : ChunkSplitterParams
+    fact_line_separator : str
 
 @dataclass_json
 @dataclass
@@ -101,8 +110,19 @@ class FileIndex:
 
         log.append(f'Loaded {len(input_with_meta)} document(s)')
 
-        token_chunk_splitter = TokenChunkSplitter(index_params.splitter_params)
-        chunks  = token_chunk_splitter.split_into_documents(input_with_meta)
+        chunk_splitter_value = index_params.splitter_params.chunk_splitter_mode.value
+        if  chunk_splitter_value== ChunkSplitterMode.FACT_LIST.value:
+            fact_chunk_splitter = FactChunkSplitter(index_params.splitter_params, index_params.fact_line_separator)
+            chunks  = fact_chunk_splitter.split_into_documents(input_with_meta)
+        elif  chunk_splitter_value== ChunkSplitterMode.FAQ_LIST.value:
+            fact_chunk_splitter = FAQChunkSplitter(index_params.splitter_params)
+            chunks  = fact_chunk_splitter.split_into_documents(input_with_meta)
+        elif chunk_splitter_value== ChunkSplitterMode.TOKEN_MODE.value:
+            token_chunk_splitter = TokenChunkSplitter(index_params.splitter_params)
+            chunks  = token_chunk_splitter.split_into_documents(input_with_meta)
+        else:
+            raise FileIndexingError(f'Unsupported ChunkSplitterMode: {chunk_splitter_value}')
+        
         log.append(f'Total count of chunks {len(chunks)}')
 
         # remove index before creating
@@ -150,6 +170,7 @@ class FileIndex:
                 log.append('Index has been stored on disk')
         except Exception as error: # pylint: disable=W0718
             log.append(error)
+            logger.error(error)
 
         if qdrant is not None:
             qdrant.client.close()
@@ -199,6 +220,7 @@ class FileIndex:
             file_index_meta = FileIndexMeta.from_json(json_data) # pylint: disable=E1101
             return file_index_meta
         except Exception as error: # pylint: disable=W0718
+            logger.error(error)
             return FileIndexMeta(None, None, None, error)
     
     def delete_index(self, document_set : str, index_name : str):

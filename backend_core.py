@@ -8,6 +8,7 @@ from typing import Callable
 import logging
 
 from core.file_indexing import FileIndex, FileIndexParams
+from core.parsers.chunk_splitters.base_splitter import ChunkSplitterMode
 from core.source_storage import SourceStorage
 from core.llm_manager import LlmManager, LlmFactsResult
 from core.document_set_manager import DocumentSetManager
@@ -46,6 +47,7 @@ class BackendFileIndexingParams:
     chunk_size     : int
     chunk_overlap  : int
     use_formatted  : bool
+    chunk_splitter_mode : ChunkSplitterMode
 
 @dataclass
 class BackendChunk:
@@ -270,12 +272,14 @@ class BackEndCore():
         embedding_manager = self.get_embedding_manager()
 
         fileIndexParams = FileIndexParams(
-                splitter_params= ChunkSplitterParams(
+                ChunkSplitterParams(
                     params.chunk_min,
                     params.chunk_size,
                     params.chunk_overlap,
-                    llm_manager.get_model_name()
-                )
+                    llm_manager.get_model_name(),
+                    params.chunk_splitter_mode,
+                ),
+                text_extractor.FACT_LINE_SEPARATOR
         )
 
         input_with_meta = text_extractor.get_input_with_meta(document_set, params.use_formatted)

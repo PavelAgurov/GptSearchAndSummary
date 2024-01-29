@@ -3,10 +3,17 @@
 """
 # pylint: disable=R0903,C0305
 
+from enum import Enum
 from abc import abstractmethod
 from dataclasses import dataclass
 
 from langchain.docstore.document import Document
+
+class ChunkSplitterMode(Enum):
+    """Chunk splitter modes"""
+    TOKEN_MODE = "TokenChunkSplitter"
+    FACT_LIST  = "Fact list"
+    FAQ_LIST   = "FAQ list"
 
 @dataclass
 class ChunkSplitterParams:
@@ -15,6 +22,7 @@ class ChunkSplitterParams:
     tokens_per_chunk     : int
     chunk_overlap_tokens : int
     model_name           : str
+    chunk_splitter_mode  : ChunkSplitterMode
 
 class BaseChunkSplitter():
     """Split text into chunks"""

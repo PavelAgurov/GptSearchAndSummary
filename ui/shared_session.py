@@ -9,14 +9,15 @@ SESSION_SELECTED_DOCUMENT_SET = 'saved_selected_document_set'
 def set_selected_document_set(selected_document_set : str):
     """Set selected document set"""
     st.session_state[SESSION_SELECTED_DOCUMENT_SET] = selected_document_set
-    st.experimental_set_query_params(document_set=selected_document_set)
+    st.query_params["document_set"] = selected_document_set
+    #st.experimental_set_query_params(document_set=selected_document_set)
 
 def get_selected_document_set_index(selected_document_set_list : list[str])-> int:
     """Find index of saved selected document str"""
 
-    query_params = st.experimental_get_query_params()
+    query_params = st.query_params.to_dict()
     if 'document_set' in query_params:
-        st.session_state[SESSION_SELECTED_DOCUMENT_SET] = query_params['document_set'][0]
+        st.session_state[SESSION_SELECTED_DOCUMENT_SET] = query_params["document_set"]
 
     if SESSION_SELECTED_DOCUMENT_SET not in st.session_state:
         st.session_state[SESSION_SELECTED_DOCUMENT_SET] = None

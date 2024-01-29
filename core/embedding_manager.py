@@ -47,7 +47,7 @@ class EmbeddingManager():
                     EmbeddingType.SBERT,
                     "https://www.sbert.net/",
                     "Sentence Transformers (https://www.sbert.net/), Free",
-                    0.20
+                    0.40
                 ),
                 EmbeddingItem(
                     EmbeddingType.MULTILP,

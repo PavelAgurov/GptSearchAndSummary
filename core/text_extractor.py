@@ -34,7 +34,7 @@ class TextExtractor:
     __META_EXT = '.json'
     __TABLES_EXT = '.tables.json'
 
-    __FACT_LINE_SEPARATOR = '#### FACT ####'
+    FACT_LINE_SEPARATOR = '#### FACT ####'
 
     __parser_map = {
         '.pdf'  : PdfParser,
@@ -211,7 +211,7 @@ class TextExtractor:
         fact_file_name = self.__get_facts_file_name(document_set, plain_text_file_name)
         with open(fact_file_name, "wt", encoding="utf-8") as f:
             for fact in fact_list:
-                f.write(self.__FACT_LINE_SEPARATOR)
+                f.write(self.FACT_LINE_SEPARATOR)
                 f.write('\n')
                 f.write(fact)
                 f.write('\n\n')
@@ -221,7 +221,7 @@ class TextExtractor:
         fact_file_name = self.__get_facts_file_name(document_set, plain_text_file_name)
         with open(fact_file_name, "rt", encoding="utf-8") as f:
             fact_str = f.read()
-        fact_list = [fact.strip() for fact in fact_str.split(self.__FACT_LINE_SEPARATOR) if fact.strip()]
+        fact_list = [fact.strip() for fact in fact_str.split(self.FACT_LINE_SEPARATOR) if fact.strip()]
         return fact_list
     
     def get_formatted_text(self, document_set : str, plain_text_file : str) -> str:
