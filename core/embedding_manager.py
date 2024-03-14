@@ -9,8 +9,8 @@ from enum import Enum
 from dataclasses import dataclass
 from typing import Callable
 
-from langchain.embeddings import OpenAIEmbeddings
-from langchain.embeddings import SentenceTransformerEmbeddings
+from langchain_community.embeddings import OpenAIEmbeddings
+from langchain_community.embeddings import SentenceTransformerEmbeddings
 
 class EmbeddingType(Enum):
     """Types of embeddings"""

@@ -4,10 +4,9 @@
 # pylint: disable=C0301,C0103,C0304,C0303,W0611,W0511,R0913,R0402
 
 from dataclasses import dataclass
-import json
 from langchain.prompts.prompt import PromptTemplate
 from langchain.chains import LLMChain
-from langchain.callbacks import get_openai_callback
+from langchain_community.callbacks import get_openai_callback
 
 from core.llm.llm_json_parser import get_llm_json
 

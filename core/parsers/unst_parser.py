@@ -4,7 +4,7 @@
 
 # pylint: disable=C0301,C0103,C0304,C0303,C0305,W0611,W0511,R0903
 
-from langchain.document_loaders import UnstructuredFileLoader
+from langchain_community.document_loaders import UnstructuredFileLoader
 
 from core.parsers.base_parser import DocumentContentItem, DocumentParserResult, BaseParser, DocumentParserParams
 

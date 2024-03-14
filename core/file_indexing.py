@@ -13,7 +13,7 @@ from dataclasses_json import dataclass_json
 from qdrant_client import QdrantClient
 
 from langchain.embeddings.base import Embeddings
-from langchain.vectorstores import Qdrant
+from langchain_community.vectorstores import Qdrant
 from langchain.docstore.document import Document
 
 from core.parsers.chunk_splitters.base_splitter import ChunkSplitterParams, ChunkSplitterMode

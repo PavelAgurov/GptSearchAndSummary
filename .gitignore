@@ -20,3 +20,4 @@
 /ui/__pycache__
 /core/facts/__pycache__
 /.logs
+/.promptLib

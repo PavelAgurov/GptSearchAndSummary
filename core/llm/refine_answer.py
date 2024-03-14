@@ -7,7 +7,7 @@ import logging
 import traceback
 from dataclasses import dataclass
 
-from langchain.callbacks import get_openai_callback
+from langchain_community.callbacks import get_openai_callback
 from langchain.prompts.prompt import PromptTemplate
 from langchain.chains import LLMChain
 

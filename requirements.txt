@@ -12,3 +12,6 @@ streamlit-agraph
 html5lib
 beautifulsoup4
 pydantic
+langchain_openai
+langchain_core
+langchain_community

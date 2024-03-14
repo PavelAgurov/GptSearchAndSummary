@@ -8,12 +8,12 @@ import os
 from dataclasses import dataclass
 import logging
 
-import langchain
 from langchain.prompts.prompt import PromptTemplate
 from langchain.schema.output_parser import StrOutputParser
+from langchain.globals import set_llm_cache
 from langchain.cache import SQLiteCache
-from langchain.callbacks import get_openai_callback
-from langchain.chat_models import ChatOpenAI, AzureChatOpenAI
+from langchain_community.callbacks import get_openai_callback
+from langchain_openai import ChatOpenAI, AzureChatOpenAI
 from langchain.chains import LLMChain
 from langchain.text_splitter import TokenTextSplitter
 
@@ -95,7 +95,8 @@ class LlmManager():
     _TIKTOKEN_CACHE_DIR = ".tiktoken-cache"
 
     def __init__(self, all_secrets : dict[str, any]):
-        langchain.llm_cache = SQLiteCache()
+        # Init cache
+        set_llm_cache(SQLiteCache(database_path=".langchain.db"))
 
         # https://github.com/openai/tiktoken/issues/75
         os.makedirs(self._TIKTOKEN_CACHE_DIR, exist_ok=True)

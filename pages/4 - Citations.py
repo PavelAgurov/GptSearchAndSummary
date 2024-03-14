@@ -3,6 +3,7 @@
 """
 # pylint: disable=C0301,C0103,C0303,C0304,W0611,C0411
 
+import pandas as pd
 import streamlit as st
 
 from utils_streamlit import streamlit_hack_remove_top_space, hide_footer
@@ -13,6 +14,7 @@ from utils.app_logger import init_streamlit_logger
 # ------------------------------- Const
 QUERY_MODE_NEW = "New query"
 QUERY_MODE_FROM_HISOTRY = "Saved query"
+QUERY_MODE_BULK = "Bulk query"
 
 # ------------------------------- Core
 
@@ -89,7 +91,7 @@ build_summary = st.checkbox(label="Build summary", value=True)
 
 query_mode = st.radio(
     label="Query", 
-    options= [QUERY_MODE_NEW, QUERY_MODE_FROM_HISOTRY], 
+    options= [QUERY_MODE_NEW, QUERY_MODE_FROM_HISOTRY, QUERY_MODE_BULK], 
     index=0, 
     label_visibility="collapsed", 
     horizontal=True
@@ -99,6 +101,9 @@ if query_mode == QUERY_MODE_NEW:
     query = st.text_input(label="Query:")
 if query_mode == QUERY_MODE_FROM_HISOTRY:
     query = st.selectbox(label="Saved query:", options= user_query_manager.get_query_history_query(selected_document_set, 0))
+if query_mode == QUERY_MODE_BULK:
+    query = st.text_area(label="Query lines:")
+    query_bar = st.progress(0, text="Query progress")
 
 col21, col22 = st.columns(2)
 run_button = col21.button(label="Run")
@@ -130,41 +135,66 @@ score_threshold = threshold
 if score_threshold == 0:
     score_threshold = None
 
-chunk_list = BackEndCore().similarity_search(
-                        selected_document_set,
-                        index_name,
-                        query, 
-                        sample_count, 
-                        score_threshold,
-                        add_llm_score,
-                        llm_threshold,
-                        show_status_callback
-                     )
+if query_mode == QUERY_MODE_BULK:
+    query_list = [q.strip() for q in query.split('\n') if len(q.strip()) > 0]
+else:
+    query_list = [query.strip()]
 
-if add_llm_score:
-    chunk_list.sort(key=lambda x: x.llm_score, reverse=True)
+result_set = []
+for index, query in enumerate(query_list):
 
-for index, chunk_item in enumerate(chunk_list):
-    chunk_label = f'Result {index+1} s-score {chunk_item.score:0.3f}'
-    if add_llm_score:
-        chunk_label = f'{chunk_label} llm-score {chunk_item.llm_score:0.3f}'
-    e = search_result_container.expander(label=chunk_label)
-    col31 , col32 = e.columns([80, 20])
-    col31.markdown(chunk_item.content)
-    col32.markdown(f'Metadata:<br/>{chunk_item.metadata}', unsafe_allow_html=True)
-    if add_llm_score:
-        col32.divider()
-        col32.markdown(f'LLM explanation:<br/>{chunk_item.llm_expl}', unsafe_allow_html=True)
-
-if not chunk_list:
-    summary_result_container.markdown('There are no relevant information')
-    st.stop()
+    chunk_list = BackEndCore().similarity_search(
+                            selected_document_set,
+                            index_name,
+                            query, 
+                            sample_count, 
+                            score_threshold,
+                            add_llm_score,
+                            llm_threshold,
+                            show_status_callback
+                        )
     
-if not build_summary:
-    st.stop()
+    query_bar.progress((index+1)/len(query_list))
 
-summary = BackEndCore().build_answer(query, chunk_list)
-summary_result_container.markdown(summary)
+    if add_llm_score:
+        chunk_list.sort(key=lambda x: x.llm_score, reverse=True)
 
-setup_str = f'sample_count={sample_count}, score_threshold={score_threshold}, add_llm_score={add_llm_score}, llm_threshold={llm_threshold}'
-user_query_manager.log_query(selected_document_set, query, summary, setup_str)
+    if query_mode != QUERY_MODE_BULK:
+        for index, chunk_item in enumerate(chunk_list):
+            
+            s_source = ''
+            if chunk_item.metadata:
+                if 's_source' in chunk_item.metadata:
+                    s_source = chunk_item.metadata['s_source']
+                    s_source = s_source.replace('.txt', '')
+                    s_source = f"   [{s_source}]"
+
+            chunk_label = f'Result {index+1} s-score {chunk_item.score:0.3f} {s_source}'
+            if add_llm_score:
+                chunk_label = f'{chunk_label} llm-score {chunk_item.llm_score:0.3f}'
+            e = search_result_container.expander(label=chunk_label)
+            col31 , col32 = e.columns([80, 20])
+            col31.markdown(chunk_item.content)
+            col32.markdown(f'Metadata:<br/>{chunk_item.metadata}', unsafe_allow_html=True)
+            if add_llm_score:
+                col32.divider()
+                col32.markdown(f'LLM explanation:<br/>{chunk_item.llm_expl}', unsafe_allow_html=True)
+
+    if not chunk_list:
+        result_set.append([query, 'There are no relevant information'])
+        continue
+        
+    if not build_summary:
+        continue
+
+    summary = BackEndCore().build_answer(query, chunk_list)
+    result_set.append([query, summary])
+
+    setup_str = f'sample_count={sample_count}, score_threshold={score_threshold}, add_llm_score={add_llm_score}, llm_threshold={llm_threshold}'
+    user_query_manager.log_query(selected_document_set, query, summary, setup_str)
+
+if query_mode != QUERY_MODE_BULK:
+    summary_result_container.markdown(summary)
+else:
+    result_dataframe = pd.DataFrame(result_set, columns=['Query', 'Summary'])
+    summary_result_container.dataframe(result_dataframe, use_container_width=True, hide_index=True)
