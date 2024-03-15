@@ -42,7 +42,7 @@ class TokenChunkSplitter(BaseChunkSplitter):
             chunk_ids = input_ids[start_index:cur_index]
         return splits
 
-    def split_into_documents(self, input_with_meta : list[tuple([str, {}])]) -> list[Document]:
+    def split_into_documents(self, input_with_meta : list[tuple[str, dict]]) -> list[Document]:
         """Split input into chunks Documents"""
         documents = list[Document]()
         for input_item in input_with_meta:

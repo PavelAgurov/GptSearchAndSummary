@@ -154,7 +154,8 @@ for index, query in enumerate(query_list):
                             show_status_callback
                         )
     
-    query_bar.progress((index+1)/len(query_list))
+    if query_mode == QUERY_MODE_BULK:
+        query_bar.progress((index+1)/len(query_list))
 
     if add_llm_score:
         chunk_list.sort(key=lambda x: x.llm_score, reverse=True)
@@ -194,7 +195,7 @@ for index, query in enumerate(query_list):
     user_query_manager.log_query(selected_document_set, query, summary, setup_str)
 
 if query_mode != QUERY_MODE_BULK:
-    summary_result_container.markdown(summary)
+    summary_result_container.markdown(result_set[0][1])
 else:
     result_dataframe = pd.DataFrame(result_set, columns=['Query', 'Summary'])
     summary_result_container.dataframe(result_dataframe, use_container_width=True, hide_index=True)

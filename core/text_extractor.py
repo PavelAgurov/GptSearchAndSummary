@@ -146,11 +146,11 @@ class TextExtractor:
                 file_list.append(os.path.join(document_set_folder, input_file))
         return file_list
 
-    def get_input_with_meta(self, document_set : str, use_formatted : bool) -> list[tuple([str, {}])]:
+    def get_input_with_meta(self, document_set : str, use_formatted : bool) -> list[tuple[str, ]]:
         """Get all available data with meta"""
         source_files = self.get_all_source_file_names(document_set, False)
 
-        result = list[tuple([str, {}])]()
+        result = list[tuple([str, dict])]()
         for source_file in source_files:
 
             metadata_file = self.__get_meta_file_name(source_file)
@@ -176,11 +176,11 @@ class TextExtractor:
             source = f.read()
         return source
 
-    def get_input_with_meta_by_files(self,  document_set : str, input_file_list : list[str]) -> list[tuple([str, {}])]:
+    def get_input_with_meta_by_files(self,  document_set : str, input_file_list : list[str]) -> list[tuple[str, dict]]:
         """Get all available data with meta by file names"""
         source_files = self.__convert_source_file_names(document_set, input_file_list, False)
 
-        result = list[tuple([str, {}])]()
+        result = list[tuple([str, dict])]()
         for source_file in source_files:
             print(source_file)
             metadata_file = self.__get_meta_file_name(source_file)

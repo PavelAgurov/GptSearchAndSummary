@@ -1,7 +1,7 @@
 """
     File index
 """
-# pylint: disable=C0301,C0103,C0304,C0303,W0611,W0511,R0913
+# pylint: disable=C0301,C0103,C0304,C0303,W0611,W0511,R0913,C0412,W1203
 
 import os
 import shutil
@@ -39,7 +39,7 @@ class SearchResult:
     """Result of the search"""
     content   : str
     score     : float
-    metadata  : {}
+    metadata  : dict
 
 @dataclass_json
 @dataclass
@@ -84,7 +84,7 @@ class FileIndex:
             self, 
             document_set : str, 
             index_name : str, 
-            chunks : list[Document]):
+            chunks : list[Document]) -> list[Document]:
         """Save chunks"""
         chunks_folder = os.path.join(self.__DISK_FOLDER, document_set, index_name, self.__CHUNKS_FOLDER)
         if os.path.isdir(chunks_folder):
@@ -92,14 +92,16 @@ class FileIndex:
         os.makedirs(chunks_folder)
         for index, document in enumerate(chunks):
             chunk_file_name = self.get_chunk_name(index)
+            document.metadata['chunk_file_name'] = chunk_file_name
             with open(os.path.join(chunks_folder, chunk_file_name), "wt", encoding="utf-8") as f:
                 f.write(document.page_content)
+        return chunks
 
     def run_indexing(
             self,
             document_set : str,
             index_name  : str,
-            input_with_meta : list[tuple([str, {}])],
+            input_with_meta : list[tuple[str, dict]],
             embedding_name : str,
             default_threshold : float,
             embeddings : Embeddings, 
@@ -129,7 +131,8 @@ class FileIndex:
         self.delete_index(document_set, index_name)
 
         # save all chunks
-        self.save_chunks(document_set, index_name, chunks)
+        chunks = self.save_chunks(document_set, index_name, chunks)
+        log.append(f'Chunks saved on disk ({len(chunks)} chunks)')
 
         # create index folder
         if not self.in_memory:
