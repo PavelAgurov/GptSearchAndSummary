@@ -15,3 +15,6 @@ pydantic
 langchain_openai
 langchain_core
 langchain_community
+langchain_experimental
+langchain-text-splitters
+simsimd

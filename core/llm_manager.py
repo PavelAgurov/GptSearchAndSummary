@@ -317,7 +317,7 @@ class LlmManager():
                         })
                 total_tokens += llm_callback.total_tokens
             except Exception as error_llm: # pylint: disable=W0718
-                error_list.append(error_llm)
+                error_list.append(str(error_llm))
                 logger.error(error_llm)
                 continue
 
@@ -335,7 +335,7 @@ class LlmManager():
                     fact_list.append(fact_str)
 
             except Exception as error_json: # pylint: disable=W0718
-                error_list.append(error_json)
+                error_list.append(str(error_json))
                 logger.error(error_json)
 
         return LlmFactsResult(fact_list, total_tokens, error_list)

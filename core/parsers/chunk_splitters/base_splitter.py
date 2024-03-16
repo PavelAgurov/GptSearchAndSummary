@@ -12,8 +12,11 @@ from langchain.docstore.document import Document
 class ChunkSplitterMode(Enum):
     """Chunk splitter modes"""
     TOKEN_MODE = "TokenChunkSplitter"
+    SEMANTIC_SPLITTER_SBERT = "SemanticSplitter (SBERT)"
+    CHARACTER_SPLITTER = "CharacterTextSplitter"
     FACT_LIST  = "Fact list"
     FAQ_LIST   = "FAQ list"
+
 
 @dataclass
 class ChunkSplitterParams:

@@ -5,6 +5,7 @@
 
 import requests
 import streamlit as st
+import urllib.parse
 
 from utils_streamlit import streamlit_hack_remove_top_space, hide_footer
 from backend_core import BackEndCore
@@ -110,7 +111,6 @@ if content_type == CONTENT_FROM_FILE:
     st.rerun()
 
 if content_type == CONTENT_FROM_URL_HTML:
-    progress.markdown('Fetch URL...')
     file_name_from_url = new_uploaded_url \
                                 .replace('https://', '')\
                                 .replace('http://', '') \
@@ -118,22 +118,39 @@ if content_type == CONTENT_FROM_URL_HTML:
                                 .replace('\\', '-')\
                                 .replace('&', '-')\
                                 .replace('?', '-')\
+                                .replace(':', '-')\
                                 .strip('-') \
                                 + '.html'
-    
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36",
-        "Accept-Language": "en-US,en;q=0.5",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Connection": "keep-alive",
-        "Upgrade-Insecure-Requests": "1",
-    }    
 
-    response = requests.get(new_uploaded_url, headers=headers, timeout=100)
-    if response.status_code == 200:
-        html = response.text
-        source_index.save_file(selected_document_set, file_name_from_url, html)
-        st.session_state[SESSION_UPLOADED_STATUS] = f'Content loaded into {file_name_from_url} file. {len(html)}  bytes.'
+    if new_uploaded_url.lower().startswith('file://'):
+        progress.markdown('Load from FILE...')
+        file_url = new_uploaded_url.replace('file://', '').strip('/')
+        file_url = urllib.parse.unquote(file_url)
+        try:
+            with open(file_url, encoding="utf-8") as f:
+                html_content = f.read()
+        except UnicodeDecodeError:
+            with open(file_url, encoding="cp1251") as f:
+                html_content = f.read()
+        source_index.save_file(selected_document_set, file_name_from_url, html_content)
+        st.session_state[SESSION_UPLOADED_STATUS] = f'Content loaded into {file_name_from_url} file. {len(html_content)}  bytes.'
     else:
-        st.session_state[SESSION_UPLOADED_STATUS] = f'Error loading content. Code: {response.status_code}.'
+        progress.markdown('Fetch URL...')
+    
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36",
+            "Accept-Language": "en-US,en;q=0.5",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Connection": "keep-alive",
+            "Upgrade-Insecure-Requests": "1",
+        }    
+
+        response = requests.get(new_uploaded_url, headers=headers, timeout=100)
+        if response.status_code == 200:
+            html = response.text
+            source_index.save_file(selected_document_set, file_name_from_url, html)
+            st.session_state[SESSION_UPLOADED_STATUS] = f'Content loaded into {file_name_from_url} file. {len(html)}  bytes.'
+        else:
+            st.session_state[SESSION_UPLOADED_STATUS] = f'Error loading content. Code: {response.status_code}.'
+
     st.rerun()

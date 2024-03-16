@@ -20,6 +20,8 @@ from core.parsers.chunk_splitters.base_splitter import ChunkSplitterParams, Chun
 from core.parsers.chunk_splitters.token_splitter import TokenChunkSplitter
 from core.parsers.chunk_splitters.fact_splitter import FactChunkSplitter
 from core.parsers.chunk_splitters.faq_splitter import FAQChunkSplitter
+from core.parsers.chunk_splitters.semantic_splitter import SemanticSplitter
+from core.parsers.chunk_splitters.character_splitter import CharacterSplitter
 
 logger : logging.Logger = logging.getLogger()
 
@@ -113,15 +115,21 @@ class FileIndex:
         log.append(f'Loaded {len(input_with_meta)} document(s)')
 
         chunk_splitter_value = index_params.splitter_params.chunk_splitter_mode.value
-        if  chunk_splitter_value== ChunkSplitterMode.FACT_LIST.value:
+        if  chunk_splitter_value == ChunkSplitterMode.FACT_LIST.value:
             fact_chunk_splitter = FactChunkSplitter(index_params.splitter_params, index_params.fact_line_separator)
             chunks  = fact_chunk_splitter.split_into_documents(input_with_meta)
-        elif  chunk_splitter_value== ChunkSplitterMode.FAQ_LIST.value:
+        elif  chunk_splitter_value == ChunkSplitterMode.FAQ_LIST.value:
             fact_chunk_splitter = FAQChunkSplitter(index_params.splitter_params)
             chunks  = fact_chunk_splitter.split_into_documents(input_with_meta)
-        elif chunk_splitter_value== ChunkSplitterMode.TOKEN_MODE.value:
+        elif chunk_splitter_value == ChunkSplitterMode.TOKEN_MODE.value:
             token_chunk_splitter = TokenChunkSplitter(index_params.splitter_params)
             chunks  = token_chunk_splitter.split_into_documents(input_with_meta)
+        elif chunk_splitter_value == ChunkSplitterMode.SEMANTIC_SPLITTER_SBERT.value:
+            semantic_splitter = SemanticSplitter(index_params.splitter_params)
+            chunks  = semantic_splitter.split_into_documents(input_with_meta)
+        elif chunk_splitter_value == ChunkSplitterMode.CHARACTER_SPLITTER.value:
+            character_splitter = CharacterSplitter(index_params.splitter_params)
+            chunks  = character_splitter.split_into_documents(input_with_meta)
         else:
             raise FileIndexingError(f'Unsupported ChunkSplitterMode: {chunk_splitter_value}')
         
